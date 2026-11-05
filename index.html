@@ -271,6 +271,51 @@
 
     <!-- Registro del Service Worker para PWA Offline -->
     <script>
+        // =========================================================================
+        // ADAPTADOR PWA -> GOOGLE SHEETS (API REST)
+        // Reemplaza el entorno de Google por peticiones Fetch a la nube
+        // =========================================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/PEGAR_TU_URL_AQUI/exec';
+
+        const google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(onSuccess) { this._onSuccess = onSuccess; return this; },
+                    withFailureHandler: function(onFailure) { this._onFailure = onFailure; return this; },
+                    
+                    verificarLogin: function(u, p, t) { this._exec('verificarLogin', [u, p, t]); },
+                    obtenerDatosSincronizacion: function() { this._exec('obtenerDatosSincronizacion', []); },
+                    registrarConsumo: function(d) { this._exec('registrarConsumo', [d]); },
+                    adminGetEmployees: function() { this._exec('adminGetEmployees', []); },
+                    adminSaveEmployee: function(e, n, o) { this._exec('adminSaveEmployee', [e, n, o]); },
+                    adminDeleteEmployee: function(p) { this._exec('adminDeleteEmployee', [p]); },
+                    adminGetVisitors: function() { this._exec('adminGetVisitors', []); },
+                    adminSaveVisitor: function(v, n, o) { this._exec('adminSaveVisitor', [v, n, o]); },
+                    adminDeleteVisitor: function(n) { this._exec('adminDeleteVisitor', [n]); },
+                    adminCargaMasivaDelegacion: function(d) { this._exec('adminCargaMasivaDelegacion', [d]); },
+                    adminGetPendientes: function() { this._exec('adminGetPendientes', []); },
+                    adminAprobarPendiente: function(i, u) { this._exec('adminAprobarPendiente', [i, u]); },
+                    adminRechazarPendiente: function(i, u) { this._exec('adminRechazarPendiente', [i, u]); },
+                    adminGetReports: function(s, e) { this._exec('adminGetReports', [s, e]); },
+                    enviarOlvidoPendiente: function(d) { this._exec('enviarOlvidoPendiente', [d]); },
+                    obtenerTendenciaSemanal: function() { this._exec('obtenerTendenciaSemanal', []); },
+                    obtenerAuditoriaFechaCocina: function(f) { this._exec('obtenerAuditoriaFechaCocina', [f]); },
+
+                    _exec: function(funcName, args) {
+                        const success = this._onSuccess; const failure = this._onFailure;
+                        fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ funcion: funcName, parametros: args }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        })
+                        .then(r => r.json())
+                        .then(data => { if(success) success(data); })
+                        .catch(err => { console.error('Error:', err); if(failure) failure(err); });
+                    }
+                }
+            }
+        };
+         // =========================================================================aqui termina el cod nuevo
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
