@@ -173,6 +173,7 @@
         </div>
     </footer>
 
+    <!-- MODALES VARIOS... (Se mantienen igual) -->
     <!-- MODAL DE CONFIRMACIÓN DE EXCEPCIÓN HORARIA -->
     <div id="modalExcepcion" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-slate-800 border-2 border-rose-600 rounded-2xl max-w-sm sm:max-w-md w-full p-6 shadow-2xl text-center space-y-4 mx-auto">
@@ -193,11 +194,9 @@
                 <h3 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Carga Excepcional</h3>
                 <button onclick="cerrarModalOlvido()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            
             <div class="bg-rose-950/30 border border-rose-900/50 p-3 rounded-xl text-xs text-rose-300">
                 ⚠️ <b>Atención:</b> Está por registrar un olvido de marcaje. Esto enviará una solicitud al panel administrativo para su auditoría y aprobación.
             </div>
-
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">Fecha del Consumo Olvidado</label>
@@ -218,7 +217,6 @@
                     </select>
                 </div>
             </div>
-            
             <button onclick="enviarOlvidoPendiente()" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition mt-4 shadow-lg shadow-rose-950 border border-rose-500">
                 Enviar Solicitud a Administración
             </button>
@@ -238,13 +236,11 @@
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tendencia (Últimos 7 Días)</h4>
                     <div id="tendencia-semana" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
                 </div>
-
                 <div class="space-y-2">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-2">
                         <label class="text-xs font-medium text-slate-300">Auditoría Diaria por Fecha:</label>
                         <input type="date" id="historial-fecha" onchange="cargarHistorialCocinaFecha()" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:border-blue-500 outline-none">
                     </div>
-                    
                     <div class="border border-slate-700 rounded-xl overflow-hidden bg-slate-900">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-950 text-slate-400 border-b border-slate-700">
@@ -271,10 +267,17 @@
 
     <!-- Registro del Service Worker para PWA Offline -->
     <script>
-        // =========================================================================
-        // ADAPTADOR PWA -> GOOGLE SHEETS (API REST)
-        // Reemplaza el entorno de Google por peticiones Fetch a la nube
-        // =========================================================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker PWA registrado con éxito:', reg.scope))
+                    .catch(err => console.log('Error al registrar Service Worker:', err));
+            });
+        }
+    </script>
+
+    <!-- EL NUEVO ADAPTADOR API DE GOOGLE -->
+    <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDrqaICImJU9lCJVhSJmSY8KxhGaeKBgHdjX54-sQxhiTZVxo7e1Efmi7L-BaS7iDV/exec';
 
         const google = {
@@ -305,6 +308,7 @@
                         const success = this._onSuccess; const failure = this._onFailure;
                         fetch(SCRIPT_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             body: JSON.stringify({ funcion: funcName, parametros: args }),
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                         })
@@ -315,17 +319,8 @@
                 }
             }
         };
-         // =========================================================================aqui termina el cod nuevo
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker PWA registrado con éxito:', reg.scope))
-                    .catch(err => console.log('Error al registrar Service Worker:', err));
-            });
-        }
-    </script>
 
-    <script>
+        // VARIABLES Y LOGICA DEL SISTEMA ORIGINAL
         let currentUser = null, currentRole = null, comidaSeleccionada = 'Almuerzo';
         let datosLocales = { personal: [], visitas: [] };
         let callbackExcepcionPendiente = null;
@@ -353,8 +348,9 @@
             }
         }
 
+        // FUNCION MODIFICADA PARA ENTORNO GITHUB (PWA)
         function abrirPortalAdmin() {
-        window.open('./admin.html', '_self');
+            window.open('./admin.html', '_self');
         }
 
         window.onload = function() {

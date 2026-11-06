@@ -40,8 +40,6 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Contenedor oculto para renderizado de Ticket Credencial JPG */
         #printable-ticket-container {
             position: fixed;
             left: -9999px;
@@ -91,7 +89,6 @@
                 </button>
             </form>
             
-            <!-- FIRMA OFICIAL CORPORATIVA -->
             <div class="mt-6 pt-4 border-t border-slate-100 text-center space-y-1">
                 <div class="text-[10px] font-bold uppercase tracking-widest text-ejesa-blue">
                     <i class="fa-solid fa-laptop-code mr-1"></i>Soluciones Informáticas &bull; San Salvador de Jujuy
@@ -716,11 +713,8 @@
         </div>
     </div>
 
+    <!-- EL NUEVO ADAPTADOR API DE GOOGLE -->
     <script>
-        // =========================================================================
-        // ADAPTADOR PWA -> GOOGLE SHEETS (API REST)
-        // Reemplaza el entorno de Google por peticiones Fetch a la nube
-        // =========================================================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDrqaICImJU9lCJVhSJmSY8KxhGaeKBgHdjX54-sQxhiTZVxo7e1Efmi7L-BaS7iDV/exec';
 
         const google = {
@@ -751,6 +745,7 @@
                         const success = this._onSuccess; const failure = this._onFailure;
                         fetch(SCRIPT_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             body: JSON.stringify({ funcion: funcName, parametros: args }),
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                         })
@@ -761,6 +756,8 @@
                 }
             }
         };
+
+        // VARIABLES Y LOGICA DEL SISTEMA ORIGINAL
         let adminUser = null;
         let userRole = 'admin'; 
         let database = []; 
@@ -859,4 +856,450 @@
             const active = views[view];
             document.getElementById(active.view).classList.replace('hidden', 'block');
             document.getElementById(active.nav).className = view === 'validaciones' ?
-                `admin-nav-item w-full flex
+                `admin-nav-item w-full flex justify-between items-center text-white px-4 py-3 rounded-xl font-medium transition ${active.color}` :
+                `admin-nav-item w-full flex items-center gap-3 text-white px-4 py-3 rounded-xl font-medium transition ${active.color}`;
+            
+            if (active.loader) active.loader();
+                
+            if (view === 'reportes') {
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                const currentDay = today.toISOString().split('T')[0];
+                if(!document.getElementById('rep-start').value) {
+                    document.getElementById('rep-start').value = firstDay;
+                    document.getElementById('rep-end').value = currentDay;
+                }
+            }
+            if(window.innerWidth < 1024) toggleMobileSidebar(); 
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden');
+            }
+        }
+
+        function ejecutarCargaMasiva(e) {
+            e.preventDefault();
+            const institucion = document.getElementById('masiva-institucion').value.trim();
+            const cantidad = parseInt(document.getElementById('masiva-cantidad').value);
+            const tipoComida = document.getElementById('masiva-comida').value;
+            const fecha = document.getElementById('masiva-fecha').value;
+            const btn = document.getElementById('btn-masiva');
+
+            if(!institucion || !cantidad) { alert("Complete los campos obligatorios."); return; }
+            if(!confirm(`⚠️ ¿Está seguro de generar y registrar ${cantidad} consumos de ${tipoComida} para "${institucion}" bajo "Ticket Standard"? Se inyectarán directamente a las estadísticas.`)) return;
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generando lote...';
+            btn.disabled = true;
+
+            google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Generar y Registrar Lote Masivo';
+                btn.disabled = false;
+                if(res.success) {
+                    alert(res.message);
+                    document.getElementById('masiva-institucion').value = '';
+                    document.getElementById('masiva-cantidad').value = '30';
+                } else { alert("Error: " + res.message); }
+            }).adminCargaMasivaDelegacion({ institucion, cantidad, tipoComida, fecha, adminUser });
+        }
+
+        function fetchData() { google.script.run.withSuccessHandler(res => { if(res.success) { database = res.data; renderTable(); } }).adminGetEmployees(); }
+        function fetchVisitorsData() { google.script.run.withSuccessHandler(res => { if(res.success) { visitorsDB = res.data; renderVisitorsTable(); } }).adminGetVisitors(); }
+        function fetchPendientes() {
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) {
+                    pendientesDB = res.data; renderPendientesTable();
+                    const badge = document.getElementById('badge-validaciones');
+                    if(pendientesDB.length > 0) { badge.innerText = pendientesDB.length; badge.classList.remove('hidden'); }
+                    else { badge.classList.add('hidden'); }
+                }
+            }).adminGetPendientes();
+        }
+
+        function renderPendientesTable() {
+            const tbody = document.getElementById('pendientes-table-body');
+            tbody.innerHTML = '';
+            if(pendientesDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No hay validaciones pendientes.</td></tr>`; return;
+            }
+            pendientesDB.forEach(pend => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-slate-700">${pend.fechaConsumo}</td>
+                    <td class="p-4"><div class="font-bold text-slate-800">${pend.nombre}</div><div class="text-xs text-slate-500">${pend.empresa}</div></td>
+                    <td class="p-4 text-slate-600"><span class="bg-slate-100 px-2 py-1 rounded text-xs font-semibold">${pend.tipoPersona}</span></td>
+                    <td class="p-4 text-center font-bold text-slate-700">${pend.tipoComida}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="aprobarPendiente('${pend.id}')" class="bg-emerald-100 hover:bg-emerald-500 text-emerald-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Aprobar</button>
+                            <button onclick="rechazarPendiente('${pend.id}')" class="bg-rose-100 hover:bg-rose-500 text-rose-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Rechazar</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function aprobarPendiente(id) {
+            if(!confirm("¿Aprobar consumo?")) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) fetchPendientes(); else alert(res.message); }).adminAprobarPendiente(id, adminUser);
+        }
+        function rechazarPendiente(id) {
+            if(!confirm("¿Rechazar?")) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) fetchPendientes(); }).adminRechazarPendiente(id, adminUser);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('employee-table-body');
+            const query = document.getElementById('search-input').value.toLowerCase();
+            tbody.innerHTML = ''; 
+            let cAct = 0, cIn = 0;
+
+            if(database.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No hay personal registrado en la base.</td></tr>`;
+            }
+
+            database.forEach((emp, index) => {
+                if(emp.estado === 'Habilitado') cAct++; else cIn++;
+                if(query && !emp.name.toLowerCase().includes(query) && !emp.pin.includes(query) && !emp.empresa.toLowerCase().includes(query)) return;
+                
+                const isEnabled = emp.estado === 'Habilitado';
+                const statusBadge = isEnabled 
+                    ? `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Habilitado</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-ban"></i> Inactivo</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-slate-700">${emp.pin}</td>
+                    <td class="p-4 font-bold text-slate-800">${emp.name}</td>
+                    <td class="p-4">
+                        <div class="font-semibold text-slate-700">${emp.empresa}</div>
+                        <div class="text-xs text-slate-400">${emp.sector || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editEmployee(${index})" class="w-8 h-8 rounded-lg bg-blue-50 hover:bg-ejesa-blue text-ejesa-blue hover:text-white transition flex items-center justify-center shadow-sm border border-blue-100" title="Editar Personal">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="downloadTicketJPG(${index})" class="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white transition flex items-center justify-center shadow-sm border border-emerald-200" title="Descargar Ticket JPG para WhatsApp">
+                                <i class="fa-solid fa-id-card text-xs"></i>
+                            </button>
+                            <button onclick="deleteEmployee(${index})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white transition flex items-center justify-center shadow-sm border border-rose-100" title="Eliminar Personal">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('stat-total').innerText = database.length;
+            document.getElementById('stat-active').innerText = cAct;
+            document.getElementById('stat-inactive').innerText = cIn;
+        }
+
+        function renderVisitorsTable() {
+            const tbody = document.getElementById('visitor-table-body');
+            const query = document.getElementById('search-visitor-input').value.toLowerCase();
+            tbody.innerHTML = ''; 
+            let cAct = 0, cIn = 0;
+
+            if(visitorsDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400">No hay visitas autorizadas registradas.</td></tr>`;
+            }
+
+            visitorsDB.forEach((vis, index) => {
+                if(vis.estado === 'Habilitado') cAct++; else cIn++;
+                if(query && !vis.name.toLowerCase().includes(query) && !vis.empresa.toLowerCase().includes(query)) return;
+
+                const isEnabled = vis.estado === 'Habilitado';
+                const statusBadge = isEnabled 
+                    ? `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Habilitado</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-ban"></i> Inactiva</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">${vis.name}</td>
+                    <td class="p-4 font-semibold text-slate-600">${vis.empresa}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editVisitor(${index})" class="w-8 h-8 rounded-lg bg-purple-50 hover:bg-purple-600 text-purple-600 hover:text-white transition flex items-center justify-center shadow-sm border border-purple-100" title="Editar Visita">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteVisitor(${index})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white transition flex items-center justify-center shadow-sm border border-rose-100" title="Eliminar Visita">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            const elTot = document.getElementById('stat-visitas-total');
+            if(elTot) {
+                elTot.innerText = visitorsDB.length;
+                document.getElementById('stat-visitas-active').innerText = cAct;
+                document.getElementById('stat-visitas-inactive').innerText = cIn;
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('flex'); 
+            document.getElementById(id).classList.add('hidden'); 
+            if(id === 'modal-add-employee') {
+                document.getElementById('employee-form').reset();
+                document.getElementById('emp-index').value = '-1';
+                document.getElementById('emp-original-pin').value = '';
+                document.getElementById('modal-form-title').innerText = "Agregar Personal";
+            } else if(id === 'modal-add-visitor') {
+                document.getElementById('visitor-form').reset();
+                document.getElementById('vis-index').value = '-1';
+                document.getElementById('vis-original-name').value = '';
+                document.getElementById('modal-visitor-title').innerText = "Agregar Visita";
+            }
+        }
+
+        function generateReport() {
+            const startStr = document.getElementById('rep-start').value;
+            const endStr = document.getElementById('rep-end').value;
+            if(!startStr || !endStr) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) processDashboardData(res.data); }).adminGetReports(startStr, endStr);
+        }
+
+        function processDashboardData(data) {
+            reportData = data; 
+            document.getElementById('dashboard-export-area').classList.remove('hidden');
+            let totMeals = data.length, totPers = 0, totVis = 0, excMeals = 0, audMeals = 0;
+            let statsPersonal = {}, statsVisitas = {}, indivPersonal = {}, indivVisitas = {}, listaEx = [];
+
+            data.forEach(row => {
+                const modoReg = (row.modoRegistro || "").toLowerCase();
+                
+                if (modoReg.includes("excepción")) { excMeals++; listaEx.push(row); }
+                else if (modoReg.includes("auditada") || modoReg.includes("masiva")) { audMeals++; }
+
+                let targetStats = row.tipoPersona.includes('Personal') ? (totPers++, statsPersonal) : (totVis++, statsVisitas);
+                let targetIndiv = row.tipoPersona.includes('Personal') ? indivPersonal : indivVisitas;
+
+                if(!targetStats[row.empresa]) targetStats[row.empresa] = { Desayuno: 0, Almuerzo: 0, Cena: 0, Total: 0 };
+                targetStats[row.empresa][row.tipoComida] = (targetStats[row.empresa][row.tipoComida] || 0) + 1;
+                targetStats[row.empresa].Total++;
+
+                let pKey = row.nombre + "|" + row.empresa;
+                if(!targetIndiv[pKey]) targetIndiv[pKey] = { nombre: row.nombre, empresa: row.empresa, total: 0 };
+                targetIndiv[pKey].total++;
+            });
+
+            document.getElementById('rep-kpi-total').innerText = totMeals;
+            document.getElementById('rep-kpi-personal').innerText = totPers;
+            document.getElementById('rep-kpi-visitas').innerText = totVis;
+            document.getElementById('rep-kpi-excepciones').innerText = excMeals;
+
+            renderReportTable('rep-body-personal', statsPersonal);
+            renderReportTable('rep-body-visitas', statsVisitas);
+            renderIndivTable('rep-body-pers-indiv', indivPersonal);
+            renderIndivTable('rep-body-vis-indiv', indivVisitas);
+
+            const normales = totMeals - excMeals - audMeals;
+            document.getElementById('chart-val-normal').innerText = normales;
+            document.getElementById('chart-val-exc').innerText = excMeals;
+            document.getElementById('chart-val-aud').innerText = audMeals;
+            renderChart(normales, excMeals, audMeals);
+            renderExcepcionesList(listaEx);
+        }
+
+        function renderExcepcionesList(lista) {
+            const listEl = document.getElementById('excepciones-list');
+            listEl.innerHTML = '';
+            if (lista.length === 0) { listEl.innerHTML = '<div class="text-slate-400 text-center py-2">Sin excepciones registradas.</div>'; return; }
+            lista.forEach(ex => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center border-b border-slate-50 pb-1";
+                div.innerHTML = `<span class="font-semibold text-slate-700">${ex.nombre}</span><span class="text-blue-500">${ex.tipoComida}</span>`;
+                listEl.appendChild(div);
+            });
+        }
+
+        function renderReportTable(tbodyId, statsObj) {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            Object.keys(statsObj).sort().forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-3 font-semibold">${emp}</td><td class="p-3 text-center">${statsObj[emp].Desayuno}</td><td class="p-3 text-center">${statsObj[emp].Almuerzo}</td><td class="p-3 text-center">${statsObj[emp].Cena}</td><td class="p-3 text-center font-bold bg-slate-50">${statsObj[emp].Total}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function renderIndivTable(tbodyId, indivObj) {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            Object.keys(indivObj).sort().forEach(key => {
+                const p = indivObj[key];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-3 font-semibold">${p.nombre}</td><td class="p-3 text-slate-500">${p.empresa}</td><td class="p-3 text-center font-bold bg-slate-50">${p.total}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function renderChart(n, e, a) {
+            if(exceptionChart) exceptionChart.destroy();
+            exceptionChart = new Chart(document.getElementById('chart-excepciones').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ['Estricto', 'Extraordinario', 'Auditada/Masiva'], datasets: [{ data: [n, e, a], backgroundColor: ['#10b981', '#2563eb', '#06b6d4'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+            });
+        }
+        
+        function exportCSV() {
+            if(reportData.length === 0) return;
+            let csv = "Fecha,Hora,Comida,Persona,ID,Nombre,Empresa,Modo\n";
+            reportData.forEach(r => { csv += `"${r.fecha}","${r.hora}","${r.tipoComida}","${r.tipoPersona}","${r.identificacion}","${r.nombre}","${r.empresa}","${r.modoRegistro}"\n`; });
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+            link.download = `Auditoria_${document.getElementById('rep-start').value}.csv`; link.click();
+        }
+        
+        function downloadDashboardJPG() {
+            const target = document.getElementById('dashboard-export-area');
+            html2canvas(target, { 
+                scale: 2,
+                backgroundColor: '#f8fafc',
+                windowWidth: 1280,
+                onclone: (clonedDoc) => {
+                    const clonedArea = clonedDoc.getElementById('dashboard-export-area');
+                    clonedArea.style.width = '1200px';
+                    clonedArea.style.maxWidth = '1200px';
+                    clonedArea.style.padding = '24px';
+                    clonedArea.style.margin = '0 auto';
+                    clonedArea.querySelectorAll('.overflow-x-auto, .max-h-48').forEach(el => {
+                        el.style.overflow = 'visible';
+                        el.style.maxHeight = 'none';
+                    });
+                }
+            }).then(canvas => {
+                const link = document.createElement('a'); 
+                link.download = `Dashboard_Catering_${document.getElementById('rep-start').value}_al_${document.getElementById('rep-end').value}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.92); 
+                link.click();
+            });
+        }
+
+        function saveEmployee(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('emp-index').value);
+            const orig = document.getElementById('emp-original-pin').value;
+            const isNew = idx === -1;
+            const btn = document.getElementById('btn-save-emp');
+            btn.innerText = 'Guardando...'; btn.disabled = true;
+            
+            const empData = {
+                pin: document.getElementById('emp-pin').value.trim(),
+                name: document.getElementById('emp-name').value.trim(),
+                empresa: document.getElementById('emp-company').value.trim(),
+                sector: document.getElementById('emp-sector').value.trim(),
+                phone: document.getElementById('emp-phone').value.trim(),
+                estado: document.getElementById('emp-status').value
+            };
+            google.script.run.withSuccessHandler(res => {
+                btn.innerText = 'Guardar'; btn.disabled = false;
+                if(res.success) { closeModal('modal-add-employee'); fetchData(); } else alert(res.message);
+            }).adminSaveEmployee(empData, isNew, orig);
+        }
+        
+        function generateRandomPin() {
+            let n;
+            let unique = false;
+            while(!unique) {
+                n = Math.floor(100 + Math.random() * 900).toString();
+                if(!database.some(e => e.pin === n)) unique = true;
+            }
+            document.getElementById('emp-pin').value = n;
+        }
+
+        function editEmployee(idx) {
+            const e = database[idx];
+            document.getElementById('emp-index').value = idx;
+            document.getElementById('emp-original-pin').value = e.pin;
+            document.getElementById('emp-pin').value = e.pin;
+            document.getElementById('emp-name').value = e.name;
+            document.getElementById('emp-company').value = e.empresa;
+            document.getElementById('emp-sector').value = e.sector;
+            document.getElementById('emp-phone').value = e.phone;
+            document.getElementById('emp-status').value = e.estado;
+            document.getElementById('modal-form-title').innerText = "Editar Personal";
+            openModal('modal-add-employee');
+        }
+
+        function deleteEmployee(idx) {
+            const emp = database[idx];
+            if(!confirm(`⚠️ ¿Está seguro que desea ELIMINAR a ${emp.name} (PIN: ${emp.pin})?`)) return;
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) fetchData(); else alert(res.message);
+            }).adminDeleteEmployee(emp.pin);
+        }
+
+        function downloadTicketJPG(idx) {
+            const emp = database[idx];
+            document.getElementById('ticket-name').innerText = emp.name;
+            document.getElementById('ticket-company').innerText = emp.empresa + (emp.sector ? ' - ' + emp.sector : '');
+            document.getElementById('ticket-pin').innerText = emp.pin;
+            
+            const now = new Date();
+            document.getElementById('ticket-date').innerText = now.toLocaleDateString('es-AR');
+
+            const ticketCard = document.getElementById('ticket-content');
+            html2canvas(ticketCard, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Credencial_${emp.name.replace(/\s+/g, '_')}_PIN_${emp.pin}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            });
+        }
+
+        function saveVisitor(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('vis-index').value);
+            const orig = document.getElementById('vis-original-name').value;
+            const isNew = idx === -1;
+            const btn = document.getElementById('btn-save-vis');
+            btn.innerText = 'Guardando...'; btn.disabled = true;
+
+            const visData = {
+                name: document.getElementById('vis-name').value.trim(),
+                empresa: document.getElementById('vis-company').value.trim(),
+                estado: document.getElementById('vis-status').value
+            };
+            google.script.run.withSuccessHandler(res => {
+                btn.innerText = 'Guardar'; btn.disabled = false;
+                if(res.success) { closeModal('modal-add-visitor'); fetchVisitorsData(); } else alert(res.message);
+            }).adminSaveVisitor(visData, isNew, orig);
+        }
+
+        function editVisitor(idx) {
+            const v = visitorsDB[idx];
+            document.getElementById('vis-index').value = idx;
+            document.getElementById('vis-original-name').value = v.name;
+            document.getElementById('vis-name').value = v.name;
+            document.getElementById('vis-company').value = v.empresa;
+            document.getElementById('vis-status').value = v.estado;
+            document.getElementById('modal-visitor-title').innerText = "Editar Visita";
+            openModal('modal-add-visitor');
+        }
+
+        function deleteVisitor(idx) {
+            const v = visitorsDB[idx];
+            if(!confirm(`⚠️ ¿Está seguro que desea ELIMINAR la visita autorizada "${v.name}"?`)) return;
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) fetchVisitorsData(); else alert(res.message);
+            }).adminDeleteVisitor(v.name);
+        }
+    </script>
+</body>
+</html>
