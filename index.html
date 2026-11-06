@@ -354,9 +354,7 @@
         }
 
         function abrirPortalAdmin() {
-            google.script.run.withSuccessHandler(function(url) {
-                window.open(url + '?v=admin', '_blank'); 
-            }).getScriptUrl();
+        window.open('./admin.html', '_self');
         }
 
         window.onload = function() {
