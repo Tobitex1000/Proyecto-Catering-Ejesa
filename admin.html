@@ -153,10 +153,39 @@
         };
 
         async function handleLogin(e) {
-            e.preventDefault(); const u = document.getElementById('adminUser').value.trim(); const p = document.getElementById('adminPass').value.trim();
-            const { data, error } = await db.from('Credenciales').select('*').eq('usuario', u).eq('password', p).single();
-            if (error || !data || data.rol === 'comedor') { document.getElementById('loginError').innerText = 'Acceso Denegado.'; document.getElementById('loginError').classList.remove('hidden'); } 
-            else { adminUser = data.descripcion; sessionStorage.setItem('admin_user', adminUser); showDashboard(); }
+            e.preventDefault(); 
+            const u = document.getElementById('adminUser').value.trim(); 
+            const p = document.getElementById('adminPass').value.trim();
+            const err = document.getElementById('loginError');
+            err.classList.add('hidden');
+
+            try {
+                const { data, error } = await db
+                    .from('Credenciales')
+                    .select('*')
+                    .eq('usuario', u)
+                    .eq('password', p)
+                    .single();
+
+                if (error || !data) {
+                    err.innerText = 'Usuario o contraseña incorrectos.';
+                    err.classList.remove('hidden');
+                } else {
+                    const rolUsuario = (data.rol || '').toLowerCase();
+                    
+                    if (rolUsuario === 'admin' || rolUsuario === 'cocina') {
+                        adminUser = data.descripcion || data.usuario;
+                        sessionStorage.setItem('admin_user', adminUser);
+                        showDashboard();
+                    } else {
+                        err.innerText = 'Acceso denegado: este usuario no tiene permisos de administración.';
+                        err.classList.remove('hidden');
+                    }
+                }
+            } catch (errNet) {
+                err.innerText = 'Error de conexión con la base de datos.';
+                err.classList.remove('hidden');
+            }
         }
 
         function showDashboard() {
