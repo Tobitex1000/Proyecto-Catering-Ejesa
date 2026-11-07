@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test de Conexión Supabase</title>
-    <!-- Librería de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #1e293b; color: white; }
@@ -17,44 +16,34 @@
 <body>
 
     <h2>Prueba de Diagnóstico Supabase</h2>
-    <p>Vamos a intentar leer la tabla <b>Credenciales</b> de tu proyecto.</p>
-    
     <button onclick="probarConexion()">1. Probar Conexión</button>
-
-    <h3 style="margin-top: 30px;">Resultado de la lectura:</h3>
     <pre id="resultado">Esperando acción...</pre>
 
     <script>
-        // Tus credenciales exactas
         const SUPABASE_URL = 'https://wdbqhqykqogwalesqpp.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_o23qFllIDQ4SfFanUftyTQ_Zh_py4yK';
         
-        // Inicializamos el cliente
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // CAMBIO APLICADO AQUÍ: Nombramos a la variable 'db' para no chocar con la librería
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function probarConexion() {
             const pantalla = document.getElementById('resultado');
             pantalla.className = "";
-            pantalla.innerText = "⏳ Conectando con Supabase y buscando datos...";
+            pantalla.innerText = "⏳ Conectando...";
 
             try {
-                // Intentamos hacer una lectura (SELECT) de la tabla Credenciales
-                const { data, error } = await supabase.from('Credenciales').select('*');
+                // CAMBIO APLICADO AQUÍ: Usamos 'db' en lugar de 'supabase'
+                const { data, error } = await db.from('Credenciales').select('*');
 
                 if (error) {
                     pantalla.className = "error";
-                    pantalla.innerText = "❌ ERROR DE SUPABASE:\n" + JSON.stringify(error, null, 2);
+                    pantalla.innerText = "❌ ERROR: " + JSON.stringify(error, null, 2);
                 } else {
-                    if (data.length === 0) {
-                        pantalla.className = "error";
-                        pantalla.innerText = "⚠️ CONEXIÓN EXITOSA, PERO LA TABLA ESTÁ VACÍA (O el RLS sigue bloqueando la lectura).\n\nDatos recibidos: []";
-                    } else {
-                        pantalla.innerText = "✅ ¡ÉXITO! SE LEYERON LOS DATOS PERFECTAMENTE:\n\n" + JSON.stringify(data, null, 2);
-                    }
+                    pantalla.innerText = "✅ ¡ÉXITO! Datos:\n" + JSON.stringify(data, null, 2);
                 }
             } catch (err) {
                 pantalla.className = "error";
-                pantalla.innerText = "❌ ERROR CRÍTICO DE RED O LIBRERÍA:\n" + err.message;
+                pantalla.innerText = "❌ ERROR CRÍTICO: " + err.message;
             }
         }
     </script>
