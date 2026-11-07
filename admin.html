@@ -3,279 +3,1302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Servicio Catering - Admin (v2.1)</title>
+    <title>Servicio Catering - Admin</title>
     
+    <!-- Configuración PWA y Marcadores de Iconos -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0047AB">
-    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Servicio Catering">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Librería UMD de Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
     <script>
-        tailwind.config = { theme: { extend: { colors: { ejesa: { blue: '#0047AB', cyan: '#00B4D8', dark: '#0B132B' } }, fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ejesa: { blue: '#0047AB', cyan: '#00B4D8', dark: '#0B132B' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
     </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #printable-ticket-container {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            background: white;
+            z-index: -10;
+        }
+        .ticket-card {
+            border: 3px solid #0B132B;
+            width: 340px; 
+            padding: 24px;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 16px;
+        }
+    </style>
 </head>
 <body class="h-full flex flex-col font-sans antialiased text-slate-800">
 
     <div id="login-screen" class="fixed inset-0 bg-ejesa-dark z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-ejesa-blue text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg"><i class="fa-solid fa-user-shield"></i></div>
-                <h2 class="text-2xl font-bold text-slate-900">Portal Admin</h2>
-                <p class="text-slate-500 text-sm">Base de Datos PostgreSQL (Supabase)</p>
+        <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-fade-in">
+            <div class="text-center mb-6 sm:mb-8">
+                <div class="w-16 h-16 bg-ejesa-blue text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Portal Administrativo</h2>
+                <p class="text-slate-500 text-sm">Gestión y Reportes de Consumos</p>
             </div>
-            <form onsubmit="handleLogin(event)" class="space-y-5">
-                <input type="text" id="adminUser" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Usuario">
-                <input type="password" id="adminPass" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Contraseña">
-                <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg text-center font-medium"></div>
-                <button type="submit" id="btnLogin" class="w-full bg-ejesa-blue text-white font-bold py-3.5 rounded-xl shadow-lg transition">Ingresar</button>
+            <form onsubmit="handleLogin(event)" class="space-y-4 sm:space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Usuario</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="adminUser" required class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-ejesa-blue outline-none transition" placeholder="admin o cocina">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="adminPass" required class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-ejesa-blue outline-none transition" placeholder="••••••••">
+                    </div>
+                </div>
+                <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-center font-medium"></div>
+                <button type="submit" id="btnLogin" class="w-full bg-ejesa-blue hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition">
+                    Ingresar al Panel
+                </button>
             </form>
+            
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center space-y-1">
+                <div class="text-[10px] font-bold uppercase tracking-widest text-ejesa-blue">
+                    <i class="fa-solid fa-laptop-code mr-1"></i>Soluciones Informáticas &bull; San Salvador de Jujuy
+                </div>
+                <p class="text-xs font-bold text-slate-700">Autor: Fabian R. Martinez</p>
+                <p class="text-[11px] text-slate-500">CUIL: 20-36486308-0 &bull; Tel: +54 9 388 4087128</p>
+                <p class="text-[10px] font-semibold text-slate-400">Desarrollado para EJESA &bull; Año 2026 &bull; Versión V1.0</p>
+            </div>
         </div>
     </div>
 
     <div id="dashboard-screen" class="hidden h-full flex-col">
-        <header class="bg-white border-b px-4 py-3 flex justify-between items-center shadow-sm z-30">
-            <div class="flex items-center gap-3"><div class="bg-ejesa-blue text-white font-bold px-3 py-1.5 rounded-lg">EJESA</div><h1 class="text-lg font-bold">Panel Admin</h1></div>
-            <div class="flex items-center gap-3"><span id="header-user-name" class="text-sm font-medium text-slate-500"></span><button onclick="logout()" class="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg font-medium">Salir</button></div>
+        <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shrink-0 shadow-sm z-30">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-500 hover:text-slate-800 text-xl p-1 focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="bg-ejesa-blue text-white font-bold px-2 sm:px-3 py-1.5 rounded-lg text-sm sm:text-lg tracking-wider shadow">EJESA</div>
+                <h1 class="text-sm sm:text-lg font-bold tracking-tight text-slate-800 hidden sm:block">Panel Catering</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="header-user-name" class="text-xs sm:text-sm font-medium text-slate-500 hidden sm:flex items-center gap-2"></span>
+                <button onclick="logout()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs sm:text-sm px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Salir</span>
+                </button>
+            </div>
         </header>
 
-        <div class="flex flex-1 overflow-hidden">
-            <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 p-4">
-                <nav class="space-y-1">
-                    <button onclick="switchView('personal')" id="nav-personal" class="w-full flex gap-3 items-center bg-ejesa-blue text-white px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-users w-5"></i> Personal</button>
-                    <button onclick="switchView('visitas')" id="nav-visitas" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-handshake w-5"></i> Visitas</button>
-                    <button onclick="switchView('masiva')" id="nav-masiva" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-bus w-5"></i> Lotes Masivos</button>
-                    <button onclick="switchView('validaciones')" id="nav-validaciones" class="w-full flex justify-between items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium">
-                        <div class="flex gap-3"><i class="fa-solid fa-check-double w-5"></i> Validaciones</div><span id="badge-val" class="hidden bg-blue-500 text-white text-[10px] px-2 rounded-full">0</span>
-                    </button>
-                    <button onclick="switchView('reportes')" id="nav-reportes" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-chart-pie w-5"></i> Reportes</button>
-                </nav>
+        <div class="flex flex-1 overflow-hidden relative">
+            <aside id="sidebar" class="absolute lg:relative inset-y-0 left-0 w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-20">
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-2">Menú de Navegación</p>
+                        <nav class="space-y-1">
+                            <button onclick="switchAdminView('personal')" id="nav-personal" class="admin-nav-item w-full flex items-center gap-3 bg-ejesa-blue text-white px-4 py-3 rounded-xl font-medium transition">
+                                <i class="fa-solid fa-users w-5 text-center"></i> Personal Planta
+                            </button>
+                            <button onclick="switchAdminView('visitas')" id="nav-visitas" class="admin-nav-item w-full flex items-center gap-3 hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition">
+                                <i class="fa-solid fa-handshake w-5 text-center"></i> Visitas / Proveedores
+                            </button>
+                            <button onclick="switchAdminView('masiva')" id="nav-masiva" class="admin-nav-item w-full flex items-center gap-3 hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition">
+                                <i class="fa-solid fa-bus w-5 text-center"></i> Carga Masiva (Lotes)
+                            </button>
+                            <button onclick="switchAdminView('validaciones')" id="nav-validaciones" class="admin-nav-item w-full flex justify-between items-center hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition">
+                                <div class="flex items-center gap-3"><i class="fa-solid fa-check-double w-5 text-center"></i> Validaciones</div>
+                                <span id="badge-validaciones" class="hidden bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button onclick="switchAdminView('reportes')" id="nav-reportes" class="admin-nav-item w-full flex items-center gap-3 hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition">
+                                <i class="fa-solid fa-chart-pie w-5 text-center"></i> Reportes y Estadísticas
+                            </button>
+                        </nav>
+                    </div>
+                </div>
             </aside>
+            
+            <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-10 hidden lg:hidden"></div>
 
-            <main class="flex-1 bg-slate-50 p-6 overflow-y-auto">
-                <!-- VISTA PERSONAL -->
-                <div id="view-personal" class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-slate-800">Directorio de Personal</h2>
-                        <button onclick="document.getElementById('modal-add').classList.remove('hidden')" class="bg-emerald-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg"><i class="fa-solid fa-plus"></i> Nuevo Empleado</button>
-                    </div>
-                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
-                        <table class="w-full text-left border-collapse"><thead class="bg-slate-50 border-b"><tr><th class="p-4">PIN / DNI</th><th class="p-4">Nombre</th><th class="p-4">Empresa</th><th class="p-4">Estado</th><th class="p-4 text-center">Acciones</th></tr></thead><tbody id="employee-table-body" class="text-sm divide-y"></tbody></table>
-                    </div>
-                </div>
-
-                <!-- VISTA VISITAS -->
-                <div id="view-visitas" class="space-y-6 hidden">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-slate-800">Directorio de Visitas</h2>
-                    </div>
-                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
-                        <table class="w-full text-left border-collapse"><thead class="bg-slate-50 border-b"><tr><th class="p-4">Nombre</th><th class="p-4">Empresa</th><th class="p-4">Estado</th></tr></thead><tbody id="visitor-table-body" class="text-sm divide-y"></tbody></table>
-                    </div>
-                </div>
-
-                <!-- VISTA CARGA MASIVA -->
-                <div id="view-masiva" class="space-y-6 max-w-xl mx-auto hidden">
-                    <div class="bg-white rounded-3xl shadow-xl border p-8 space-y-6">
-                        <h2 class="text-xl font-bold text-slate-800">Carga Masiva Directa</h2>
-                        <form onsubmit="ejecutarCargaMasiva(event)" class="space-y-4">
-                            <input type="text" id="masiva-inst" required placeholder="Institución / Delegación" class="w-full px-4 py-3 border rounded-xl">
-                            <div class="flex gap-4">
-                                <input type="number" id="masiva-cant" required min="1" value="30" class="w-full px-4 py-3 border rounded-xl" title="Cantidad">
-                                <select id="masiva-comida" class="w-full px-4 py-3 border rounded-xl"><option value="Almuerzo">Almuerzo</option><option value="Cena">Cena</option></select>
+            <main class="flex-1 bg-slate-50 p-4 sm:p-6 overflow-y-auto flex flex-col justify-between">
+                <div>
+                    <!-- VISTA PERSONAL -->
+                    <div id="view-personal" class="max-w-6xl mx-auto space-y-4 sm:space-y-6 block">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Directorio de Personal</h2>
+                                <p class="text-slate-500 text-xs sm:text-sm">Administre los accesos y tickets del personal fijo.</p>
                             </div>
-                            <button type="submit" class="w-full bg-ejesa-blue text-white font-bold py-3.5 rounded-xl">Generar Lote Masivo</button>
+                            <button onclick="openModal('modal-add-employee')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 sm:py-2.5 px-5 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Nuevo Empleado
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4">
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-blue-50 text-ejesa-blue flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-users"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Total</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-total">0</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-check-circle"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Habilitados</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-active">0</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-ban"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Inactivos</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-inactive">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                            <div class="p-3 sm:p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                                <div class="relative w-full sm:w-96">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar empleado..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                                </div>
+                                <button onclick="fetchData()" id="btn-sync-admin" class="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-rotate"></i> Recargar
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                        <th class="p-4 font-semibold">PIN/DNI</th>
+                                        <th class="p-4 font-semibold">Nombre Apellido</th>
+                                        <th class="p-4 font-semibold">Empresa / Sector</th>
+                                        <th class="p-4 font-semibold text-center">Estado</th>
+                                        <th class="p-4 font-semibold text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employee-table-body" class="text-sm divide-y divide-slate-100">
+                                    <tr><td colspan="5" class="p-8 text-center text-slate-400">Cargando base de datos...</td></tr>
+                                </tbody>
+                            </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VISTA VISITAS -->
+                    <div id="view-visitas" class="max-w-6xl mx-auto space-y-4 sm:space-y-6 hidden">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Directorio de Visitas y Contratistas</h2>
+                                <p class="text-slate-500 text-xs sm:text-sm">Administre el personal externo autorizado para el comedor.</p>
+                            </div>
+                            <button onclick="openModal('modal-add-visitor')" class="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 sm:py-2.5 px-5 rounded-xl shadow-lg shadow-purple-500/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Agregar Visita
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4">
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-handshake"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Total Visitas</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-visitas-total">0</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-check-circle"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Habilitadas</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-visitas-active">0</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                                <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-sm sm:text-xl mb-1 sm:mb-0 mx-auto sm:mx-0"><i class="fa-solid fa-ban"></i></div>
+                                <div>
+                                    <p class="text-[10px] sm:text-sm font-medium text-slate-500">Inactivas</p>
+                                    <p class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-visitas-inactive">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                            <div class="p-3 sm:p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                                <div class="relative w-full sm:w-96">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" id="search-visitor-input" oninput="renderVisitorsTable()" placeholder="Buscar por nombre o empresa..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                                </div>
+                                <button onclick="fetchVisitorsData()" id="btn-sync-visitas" class="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-rotate"></i> Recargar
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Nombre Apellido</th>
+                                        <th class="p-4 font-semibold">Empresa / Entidad</th>
+                                        <th class="p-4 font-semibold text-center">Estado</th>
+                                        <th class="p-4 font-semibold text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="visitor-table-body" class="text-sm divide-y divide-slate-100">
+                                    <tr><td colspan="4" class="p-8 text-center text-slate-400">Cargando base de datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA CARGA MASIVA (COLECTIVOS) -->
+                <div id="view-masiva" class="max-w-xl mx-auto space-y-4 sm:space-y-6 hidden">
+                    <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 sm:p-8 space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <div class="w-12 h-12 bg-blue-50 text-ejesa-blue rounded-2xl flex items-center justify-center text-xl mb-3 shadow-sm">
+                                <i class="fa-solid fa-bus"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-800">Carga Masiva Directa de Colectivos / Delegaciones</h2>
+                            <p class="text-slate-500 text-xs mt-1">Genera instantáneamente los consumos masivos al registro oficial bajo "Ticket Standard" para una vista prolija en el dashboard.</p>
+                        </div>
+
+                        <form onsubmit="ejecutarCargaMasiva(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la Institución / Delegación *</label>
+                                <input type="text" id="masiva-institucion" required placeholder="Ej. Escuela Técnica Nº1 Bs As" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Cantidad de Tickets *</label>
+                                    <input type="number" id="masiva-cantidad" required min="1" max="200" value="30" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Comida *</label>
+                                    <select id="masiva-comida" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-ejesa-blue outline-none bg-white">
+                                        <option value="Almuerzo">Almuerzo</option>
+                                        <option value="Desayuno">Desayuno</option>
+                                        <option value="Cena">Cena</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha del Consumo *</label>
+                                <input type="date" id="masiva-fecha" required class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                            </div>
+
+                            <button type="submit" id="btn-masiva" class="w-full bg-ejesa-blue hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 mt-2">
+                                <i class="fa-solid fa-bolt"></i> Generar y Registrar Lote Masivo
+                            </button>
                         </form>
                     </div>
                 </div>
 
                 <!-- VISTA VALIDACIONES -->
-                <div id="view-validaciones" class="space-y-6 hidden">
-                    <h2 class="text-2xl font-bold text-slate-800">Auditoría Pendientes</h2>
-                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
-                        <table class="w-full text-left border-collapse"><thead class="bg-blue-50 border-b"><tr><th class="p-4">Fecha</th><th class="p-4">Persona</th><th class="p-4">Comida</th><th class="p-4 text-center">Acción</th></tr></thead><tbody id="pendientes-table-body" class="text-sm divide-y"></tbody></table>
+                <div id="view-validaciones" class="max-w-6xl mx-auto space-y-4 sm:space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Auditoría de Consumos Pendientes</h2>
+                            <p class="text-slate-500 text-xs sm:text-sm">Apruebe o rechace los consumos que el personal omitió registrar a tiempo.</p>
+                        </div>
+                        <button onclick="fetchPendientes()" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate"></i> Actualizar Lista
+                        </button>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-blue-50 text-blue-900 text-xs uppercase tracking-wider border-b border-blue-200">
+                                        <th class="p-4 font-semibold">Fecha Consumo</th>
+                                        <th class="p-4 font-semibold">Persona (Empresa)</th>
+                                        <th class="p-4 font-semibold">Tipo</th>
+                                        <th class="p-4 font-semibold text-center">Comida</th>
+                                        <th class="p-4 font-semibold text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendientes-table-body" class="text-sm divide-y divide-slate-100">
+                                    <tr><td colspan="5" class="p-8 text-center text-slate-400">Cargando validaciones pendientes...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
                 <!-- VISTA REPORTES -->
-                <div id="view-reportes" class="space-y-6 hidden">
-                    <div class="flex gap-4 bg-white p-4 rounded-xl border">
-                        <input type="date" id="rep-start" class="border p-2 rounded">
-                        <input type="date" id="rep-end" class="border p-2 rounded">
-                        <button onclick="generateReport()" class="bg-emerald-600 text-white px-6 rounded-lg font-bold">Generar</button>
-                    </div>
-                    
-                    <div class="grid grid-cols-4 gap-4">
-                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Total</p><p class="text-3xl font-black" id="rep-kpi-total">0</p></div>
-                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Personal</p><p class="text-3xl font-black text-blue-600" id="rep-kpi-pers">0</p></div>
-                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Visitas</p><p class="text-3xl font-black text-purple-600" id="rep-kpi-vis">0</p></div>
-                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Excepciones</p><p class="text-3xl font-black text-rose-600" id="rep-kpi-exc">0</p></div>
-                    </div>
-                    
-                    <div class="bg-white p-4 rounded-xl border">
-                        <h3 class="font-bold mb-4">Consumos Totales por Empresa</h3>
-                        <table class="w-full text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">Empresa</th><th class="p-3">Total Consumido</th></tr></thead><tbody id="rep-body-empresa" class="text-sm divide-y"></tbody></table>
+                <div id="view-reportes" class="max-w-6xl mx-auto space-y-4 sm:space-y-6 hidden">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Reportes y Estadísticas</h2>
+                                <p class="text-slate-500 text-xs sm:text-sm">Exporte consumos, filtre por fechas y analice estadísticas de catering.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-end gap-4">
+                            <div class="w-full sm:w-auto flex-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Inicio</label>
+                                <input type="date" id="rep-start" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div class="w-full sm:w-auto flex-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Fin</label>
+                                <input type="date" id="rep-end" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <button onclick="generateReport()" id="btn-gen-report" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bolt"></i> Generar
+                            </button>
+                        </div>
+
+                        <div id="dashboard-export-area" class="space-y-6 bg-slate-50 p-2 hidden">
+                            
+                            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm" data-html2canvas-ignore>
+                                <span class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-chart-line mr-2"></i> Resultados del período</span>
+                                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                    <button onclick="exportCSV()" class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-file-csv"></i> Exportar a Excel (CSV)
+                                    </button>
+                                    <button onclick="downloadDashboardJPG()" class="flex-1 sm:flex-none bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-camera"></i> Descargar Dashboard (JPG)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Servicios</p>
+                                    <p class="text-3xl font-black text-slate-800" id="rep-kpi-total">0</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Personal Propio</p>
+                                    <p class="text-3xl font-black text-ejesa-blue" id="rep-kpi-personal">0</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Visitas / Contrat.</p>
+                                    <p class="text-3xl font-black text-purple-600" id="rep-kpi-visitas">0</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Excepciones Carga</p>
+                                    <p class="text-3xl font-black text-blue-600" id="rep-kpi-excepciones">0</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="lg:col-span-2 space-y-6">
+                                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                                        <div class="bg-ejesa-blue text-white px-4 py-3 font-semibold text-sm flex items-center gap-2">
+                                            <i class="fa-solid fa-users"></i> Consumos de Personal por Empresa
+                                        </div>
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full text-left border-collapse text-sm">
+                                                <thead>
+                                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                                        <th class="p-3 font-semibold">Empresa</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-coffee text-blue-400"></i> Desayunos</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-utensils text-ejesa-cyan"></i> Almuerzos</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-moon text-purple-400"></i> Cenas</th>
+                                                        <th class="p-3 font-semibold text-center">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="rep-body-personal" class="divide-y divide-slate-100"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                                        <div class="bg-purple-600 text-white px-4 py-3 font-semibold text-sm flex items-center gap-2">
+                                            <i class="fa-solid fa-handshake"></i> Consumos de Visitas por Empresa
+                                        </div>
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full text-left border-collapse text-sm">
+                                                <thead>
+                                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                                        <th class="p-3 font-semibold">Empresa</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-coffee text-blue-400"></i> Desayunos</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-utensils text-ejesa-cyan"></i> Almuerzos</th>
+                                                        <th class="p-3 font-semibold text-center"><i class="fa-solid fa-moon text-purple-400"></i> Cenas</th>
+                                                        <th class="p-3 font-semibold text-center">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="rep-body-visitas" class="divide-y divide-slate-100"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 flex flex-col items-center">
+                                    <h3 class="font-bold text-slate-700 text-sm mb-2 w-full text-center border-b border-slate-100 pb-2">Distribución de Cargas</h3>
+                                    
+                                    <div class="flex justify-between w-full text-xs font-semibold px-2 sm:px-4 mb-4 gap-1">
+                                        <span class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded shadow-sm text-center">Estricto<br><span id="chart-val-normal" class="text-sm">0</span></span>
+                                        <span class="text-blue-600 bg-blue-50 px-2 py-1 rounded shadow-sm text-center">Excepción<br><span id="chart-val-exc" class="text-sm">0</span></span>
+                                        <span class="text-cyan-600 bg-cyan-50 px-2 py-1 rounded shadow-sm text-center">Auditada<br><span id="chart-val-aud" class="text-sm">0</span></span>
+                                    </div>
+
+                                    <div class="w-full max-w-[220px] aspect-square relative mb-6">
+                                        <canvas id="chart-excepciones"></canvas>
+                                    </div>
+                                    
+                                    <h4 class="font-bold text-slate-700 text-xs mb-2 w-full text-left border-b border-slate-100 pb-1">
+                                        <i class="fa-solid fa-list text-blue-500"></i> Detalle Quienes Usaron Excepción
+                                    </h4>
+                                    <div id="excepciones-list" class="w-full max-h-48 overflow-y-auto space-y-2 text-xs pr-1">
+                                        <div class="text-slate-400 text-center py-2">Sin excepciones registradas.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                                    <div class="bg-slate-700 text-white px-4 py-3 font-semibold text-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-user-tag"></i> Consumos Individuales (Fijos)
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left border-collapse text-sm">
+                                            <thead>
+                                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                                    <th class="p-3 font-semibold">Nombre del Empleado</th>
+                                                    <th class="p-3 font-semibold">Empresa</th>
+                                                    <th class="p-3 font-semibold text-center">Total Consumido</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="rep-body-pers-indiv" class="divide-y divide-slate-100"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                                    <div class="bg-slate-700 text-white px-4 py-3 font-semibold text-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-user-clock"></i> Consumos Individuales (Visitas / Delegaciones)
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left border-collapse text-sm">
+                                            <thead>
+                                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                                    <th class="p-3 font-semibold">Nombre / Ticket</th>
+                                                    <th class="p-3 font-semibold">Empresa / Institución</th>
+                                                    <th class="p-3 font-semibold text-center">Total Consumido</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="rep-body-vis-indiv" class="divide-y divide-slate-100"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                                <h4 class="font-bold text-slate-700 text-sm mb-3 border-b border-slate-100 pb-2">
+                                    <i class="fa-solid fa-circle-info text-blue-500"></i> Glosario de Condiciones de Consumo
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
+                                    <div class="flex items-start gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-emerald-500 mt-0.5 shrink-0"></div>
+                                        <div>
+                                            <p class="font-bold text-slate-800">Carga Estricta (Normal)</p>
+                                            <p>Consumos registrados de forma correcta y dentro de los horarios permitidos en la Planta.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-blue-600 mt-0.5 shrink-0"></div>
+                                        <div>
+                                            <p class="font-bold text-slate-800">Carga Extraordinaria (Excepción)</p>
+                                            <p>Consumos registrados fuera del horario normal. Fueron explícitamente autorizados por cocina.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-cyan-500 mt-0.5 shrink-0"></div>
+                                        <div>
+                                            <p class="font-bold text-slate-800">Carga Auditada (Olvido / Masiva)</p>
+                                            <p>Consumos especiales o lotes masivos de delegaciones ingresados directamente por administración.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
+
+                <!-- FOOTER CORPORATIVO PROFESIONAL -->
+                <footer class="mt-10 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm shrink-0">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-ejesa-blue text-white flex items-center justify-center shadow-sm">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                                    Fabian R. Martinez 
+                                    <span class="bg-blue-50 text-ejesa-blue border border-blue-200 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Soluciones Informáticas</span>
+                                </div>
+                                <div class="text-[11px] text-slate-500">San Salvador de Jujuy &bull; Arquitectura y Desarrollo de Software</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-slate-600 text-[11px] bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-100">
+                            <span><i class="fa-solid fa-id-card text-ejesa-blue mr-1"></i><b>CUIL:</b> 20-36486308-0</span>
+                            <span class="text-slate-300">|</span>
+                            <span><i class="fa-solid fa-phone text-emerald-600 mr-1"></i><b>Tel:</b> +54 9 3884087128</span>
+                            <span class="text-slate-300">|</span>
+                            <span><i class="fa-solid fa-building text-slate-500 mr-1"></i><b>Cliente:</b> EJESA</span>
+                            <span class="text-slate-300">|</span>
+                            <span class="font-bold text-ejesa-blue">2026 &bull; V1.0</span>
+                        </div>
+                    </div>
+                </footer>
             </main>
         </div>
     </div>
 
-    <!-- MODAL AGREGAR PERSONAL -->
-    <div id="modal-add" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold">Guardar Personal (Supabase)</h3>
-            <form onsubmit="saveEmployee(event)" class="space-y-4">
-                <div class="flex gap-4"><input type="text" id="emp-name" placeholder="Nombre Completo" required class="w-full border p-2 rounded"><input type="text" id="emp-pin" placeholder="PIN/DNI" required class="w-full border p-2 rounded"></div>
-                <div class="flex gap-4"><input type="text" id="emp-comp" placeholder="Empresa" required class="w-full border p-2 rounded"><select id="emp-stat" class="w-full border p-2 rounded"><option value="Habilitado">Habilitado</option><option value="Deshabilitado">Inactivo</option></select></div>
-                <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="document.getElementById('modal-add').classList.add('hidden')" class="px-4 py-2 bg-slate-200 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold">Guardar BD</button></div>
+    <!-- MODALES DE PERSONAL Y VISITAS -->
+    <div id="modal-add-employee" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800" id="modal-form-title">Agregar Personal</h3>
+                <button type="button" onclick="closeModal('modal-add-employee')" class="text-slate-400 hover:text-slate-700 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <form id="employee-form" onsubmit="saveEmployee(event)" class="p-5 space-y-4 overflow-y-auto">
+                <input type="hidden" id="emp-index" value="-1">
+                <input type="hidden" id="emp-original-pin" value="">
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo *</label>
+                        <input type="text" id="emp-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">PIN ID *</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="emp-pin" required maxlength="4" placeholder="Ej: 458" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                            <button type="button" onclick="generateRandomPin()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg transition shadow-sm border border-slate-300 shrink-0" title="Generar aleatorio">
+                                <i class="fa-solid fa-dice"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Empresa *</label>
+                        <input type="text" id="emp-company" list="empresas-list" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none" placeholder="Seleccione o escriba...">
+                        <datalist id="empresas-list">
+                            <option value="EJESA">
+                            <option value="Prosegur">
+                            <option value="Limpieza SA">
+                            <option value="Contratista Externa">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sector / Puesto</label>
+                        <input type="text" id="emp-sector" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                    </div>
+                </div>
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+                        <input type="text" id="emp-phone" placeholder="Opcional" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+                        <select id="emp-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-ejesa-blue outline-none bg-white">
+                            <option value="Habilitado">Habilitado</option>
+                            <option value="Deshabilitado">Deshabilitado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-slate-100 mt-2 shrink-0">
+                    <button type="button" onclick="closeModal('modal-add-employee')" class="w-full sm:w-auto px-4 py-3 sm:py-2 text-slate-600 font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button type="submit" id="btn-save-emp" class="w-full sm:w-auto px-5 py-3 sm:py-2 bg-ejesa-blue hover:bg-blue-800 text-white font-medium rounded-lg transition shadow-md">Guardar</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <script>
-        const SUPABASE_URL = 'https://wdbqhqyqkqogwalesqpp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYnFocXlxa3FvZ3dhbGVzcXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMDY0NTcsImV4cCI6MjEwOTU4MjQ1N30.Bnl4YxAuFGeAprxGIIDWsiCuqTpoTbyswUeeI0k9Hes';
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <div id="modal-add-visitor" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800" id="modal-visitor-title">Agregar Visita</h3>
+                <button type="button" onclick="closeModal('modal-add-visitor')" class="text-slate-400 hover:text-slate-700 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <form id="visitor-form" onsubmit="saveVisitor(event)" class="p-5 space-y-4 overflow-y-auto">
+                <input type="hidden" id="vis-index" value="-1">
+                <input type="hidden" id="vis-original-name" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo *</label>
+                    <input type="text" id="vis-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Empresa / Entidad *</label>
+                    <input type="text" id="vis-company" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+                    <select id="vis-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="Habilitado">Habilitado</option>
+                        <option value="Deshabilitado">Deshabilitado</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-slate-100 mt-2 shrink-0">
+                    <button type="button" onclick="closeModal('modal-add-visitor')" class="w-full sm:w-auto px-4 py-3 sm:py-2 text-slate-600 font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button type="submit" id="btn-save-vis" class="w-full sm:w-auto px-5 py-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition shadow-md">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        let adminUser = null;
-
-        window.onload = function() {
-            const u = sessionStorage.getItem('admin_user'); if (u) { adminUser = u; showDashboard(); }
-            document.getElementById('rep-start').value = new Date().toLocaleDateString('en-CA');
-            document.getElementById('rep-end').value = new Date().toLocaleDateString('en-CA');
-        };
-
-        // LOGIN REESCRITO A PRUEBA DE FALLOS Y FLEXIBLE
-        async function handleLogin(e) {
-            e.preventDefault(); 
-            const uInput = document.getElementById('adminUser').value.trim(); 
-            const pInput = document.getElementById('adminPass').value.trim();
-            const err = document.getElementById('loginError');
-            const btn = document.getElementById('btnLogin');
+    <!-- PLANTILLA OCULTA PARA EXPORTAR CREDENCIAL / TICKET EN JPG PARA WHATSAPP -->
+    <div id="printable-ticket-container">
+        <div class="ticket-card font-sans text-center shadow-none" id="ticket-content">
+            <div class="border-b-2 border-slate-900 pb-3 mb-4">
+                <div class="bg-ejesa-blue text-white font-black text-xl py-1 px-4 rounded-lg inline-block tracking-widest mb-1">EJESA</div>
+                <h2 class="font-extrabold text-sm m-0 uppercase tracking-wider text-slate-800">Servicios Catering</h2>
+                <p class="text-[11px] text-slate-500 m-0 mt-0.5 font-medium">Credencial Personal de Acceso</p>
+            </div>
             
-            err.classList.add('hidden');
-            btn.innerText = 'Verificando...';
+            <div class="text-left mb-4 space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div>
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block">Agente / Personal:</span>
+                    <span id="ticket-name" class="text-base font-extrabold text-slate-900 uppercase leading-tight">---</span>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block">Empresa / Sector:</span>
+                    <span id="ticket-company" class="text-xs font-bold text-ejesa-blue uppercase">---</span>
+                </div>
+            </div>
 
-            try {
-                // Traemos todos los registros de credenciales para evaluarlos con seguridad en JS
-                const { data, error } = await db.from('Credenciales').select('*');
+            <div class="my-4 p-4 border-2 border-slate-900 border-dashed rounded-xl bg-blue-50/40">
+                <p class="text-[11px] font-extrabold uppercase text-slate-600 mb-1">Su PIN de Ingreso en Comedor:</p>
+                <p id="ticket-pin" class="text-4xl font-mono font-black tracking-widest text-slate-900 m-0">0000</p>
+            </div>
 
-                btn.innerText = 'Ingresar';
+            <div class="border-t-2 border-slate-900 pt-3 text-left">
+                <p class="text-[10px] font-extrabold uppercase text-slate-800 mb-1.5">Normas de Uso (Obligatorio):</p>
+                <ul class="text-[9px] pl-3.5 list-disc space-y-1 text-slate-600 leading-snug">
+                    <li>Este PIN es <b>personal e intransferible</b>.</li>
+                    <li>Se permite registrar <b>UN (1) solo consumo</b> por turno de comida al día.</li>
+                    <li>Consumos fuera de horario requieren autorización en Cocina.</li>
+                </ul>
+                <div class="mt-3 pt-2 border-t border-slate-200 flex justify-between items-center text-[8px] text-slate-400 font-semibold">
+                    <span id="ticket-date">--/--/----</span>
+                    <span>Fabian R. Martinez &bull; V1.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                if (error || !data) {
-                    err.innerText = 'Error de comunicación con Supabase.';
-                    err.classList.remove('hidden');
-                    return;
-                }
+    <!-- EL NUEVO ADAPTADOR API DE GOOGLE -->
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDrqaICImJU9lCJVhSJmSY8KxhGaeKBgHdjX54-sQxhiTZVxo7e1Efmi7L-BaS7iDV/exec';
 
-                // Buscamos coincidencia flexible (ignorando mayúsculas/minúsculas en el usuario)
-                const usuarioEncontrado = data.find(item => 
-                    item.usuario.trim().toLowerCase() === uInput.toLowerCase() && 
-                    String(item.password).trim() === pInput
-                );
-
-                if (!usuarioEncontrado) {
-                    err.innerText = 'Usuario o contraseña incorrectos.';
-                    err.classList.remove('hidden');
-                } else {
-                    const rol = (usuarioEncontrado.rol || '').trim().toLowerCase();
+        const google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(onSuccess) { this._onSuccess = onSuccess; return this; },
+                    withFailureHandler: function(onFailure) { this._onFailure = onFailure; return this; },
                     
-                    // Permitimos acceso si es admin o cocina
-                    if (rol === 'admin' || rol === 'cocina') {
-                        adminUser = usuarioEncontrado.descripcion || usuarioEncontrado.usuario;
-                        sessionStorage.setItem('admin_user', adminUser);
-                        showDashboard();
-                    } else {
-                        err.innerText = 'Acceso denegado: rol sin privilegios.';
-                        err.classList.remove('hidden');
+                    verificarLogin: function(u, p, t) { this._exec('verificarLogin', [u, p, t]); },
+                    obtenerDatosSincronizacion: function() { this._exec('obtenerDatosSincronizacion', []); },
+                    registrarConsumo: function(d) { this._exec('registrarConsumo', [d]); },
+                    adminGetEmployees: function() { this._exec('adminGetEmployees', []); },
+                    adminSaveEmployee: function(e, n, o) { this._exec('adminSaveEmployee', [e, n, o]); },
+                    adminDeleteEmployee: function(p) { this._exec('adminDeleteEmployee', [p]); },
+                    adminGetVisitors: function() { this._exec('adminGetVisitors', []); },
+                    adminSaveVisitor: function(v, n, o) { this._exec('adminSaveVisitor', [v, n, o]); },
+                    adminDeleteVisitor: function(n) { this._exec('adminDeleteVisitor', [n]); },
+                    adminCargaMasivaDelegacion: function(d) { this._exec('adminCargaMasivaDelegacion', [d]); },
+                    adminGetPendientes: function() { this._exec('adminGetPendientes', []); },
+                    adminAprobarPendiente: function(i, u) { this._exec('adminAprobarPendiente', [i, u]); },
+                    adminRechazarPendiente: function(i, u) { this._exec('adminRechazarPendiente', [i, u]); },
+                    adminGetReports: function(s, e) { this._exec('adminGetReports', [s, e]); },
+                    enviarOlvidoPendiente: function(d) { this._exec('enviarOlvidoPendiente', [d]); },
+                    obtenerTendenciaSemanal: function() { this._exec('obtenerTendenciaSemanal', []); },
+                    obtenerAuditoriaFechaCocina: function(f) { this._exec('obtenerAuditoriaFechaCocina', [f]); },
+
+                    _exec: function(funcName, args) {
+                        const success = this._onSuccess; const failure = this._onFailure;
+                        fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            redirect: 'follow',
+                            body: JSON.stringify({ funcion: funcName, parametros: args }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        })
+                        .then(r => r.json())
+                        .then(data => { if(success) success(data); })
+                        .catch(err => { console.error('Error:', err); if(failure) failure(err); });
                     }
                 }
-            } catch (errNet) {
-                btn.innerText = 'Ingresar';
-                err.innerText = 'Excepción de red al iniciar sesión.';
-                err.classList.remove('hidden');
             }
+        };
+
+        // VARIABLES Y LOGICA DEL SISTEMA ORIGINAL
+        let adminUser = null;
+        let userRole = 'admin'; 
+        let database = []; 
+        let visitorsDB = [];
+        let pendientesDB = []; 
+        let reportData = []; 
+        let exceptionChart = null; 
+        let currentView = 'personal';
+
+        window.onload = function() {
+            const savedAdmin = sessionStorage.getItem('admin_user');
+            const savedRole = sessionStorage.getItem('admin_role');
+            if (savedAdmin) { 
+                adminUser = savedAdmin; 
+                userRole = savedRole || 'admin';
+                showDashboard(); 
+            }
+        };
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+            const btn = document.getElementById('btnLogin');
+            const err = document.getElementById('loginError');
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
+            err.classList.add('hidden');
+
+            google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = 'Ingresar al Panel';
+                if (res.success) {
+                    adminUser = res.nombre;
+                    userRole = res.rol; 
+                    sessionStorage.setItem('admin_user', adminUser);
+                    sessionStorage.setItem('admin_role', userRole);
+                    showDashboard();
+                } else { err.innerText = res.message; err.classList.remove('hidden'); }
+            }).withFailureHandler(() => {
+                btn.innerHTML = 'Ingresar al Panel'; err.innerText = 'Error de conexión.'; err.classList.remove('hidden');
+            }).verificarLogin(u, p, 'admin'); 
         }
 
         function showDashboard() {
-            document.getElementById('login-screen').classList.add('hidden'); document.getElementById('dashboard-screen').classList.remove('hidden'); document.getElementById('dashboard-screen').classList.add('flex');
-            document.getElementById('header-user-name').innerText = adminUser;
-            switchView('personal'); fetchPendientes();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+            document.getElementById('dashboard-screen').classList.add('flex');
+            document.getElementById('header-user-name').innerHTML = `<i class="fa-solid fa-circle-user text-ejesa-blue text-lg"></i> ${adminUser} (${userRole.toUpperCase()})`;
+            
+            if (userRole === 'cocina') {
+                document.getElementById('nav-personal').classList.add('hidden');
+                document.getElementById('nav-visitas').classList.add('hidden');
+                document.getElementById('nav-masiva').classList.add('hidden');
+                document.getElementById('nav-validaciones').classList.add('hidden');
+                switchAdminView('reportes'); 
+            } else {
+                document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('hidden'));
+                switchAdminView('personal');
+                fetchPendientes();
+            }
         }
 
-        function switchView(v) {
-            ['personal', 'visitas', 'masiva', 'validaciones', 'reportes'].forEach(x => { document.getElementById('view-'+x).classList.add('hidden'); document.getElementById('nav-'+x).classList.remove('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+x).classList.add('text-slate-300'); });
-            document.getElementById('view-'+v).classList.remove('hidden'); document.getElementById('nav-'+v).classList.add('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+v).classList.remove('text-slate-300');
-            if(v==='personal') fetchData('Personal', 'employee-table-body');
-            if(v==='visitas') fetchData('VisitasAutorizadas', 'visitor-table-body');
+        function logout() {
+            sessionStorage.removeItem('admin_user');
+            sessionStorage.removeItem('admin_role');
+            adminUser = null; userRole = 'admin';
+            document.getElementById('dashboard-screen').classList.remove('flex');
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('adminPass').value = '';
         }
 
-        function logout() { sessionStorage.clear(); location.reload(); }
+        function switchAdminView(view) {
+            if (userRole === 'cocina' && view !== 'reportes') {
+                view = 'reportes';
+            }
 
-        async function fetchData(tabla, tbodyId) {
-            const { data } = await db.from(tabla).select('*').order('nombre');
+            currentView = view;
+            const views = {
+                'personal': { nav: 'nav-personal', view: 'view-personal', color: 'bg-ejesa-blue', loader: fetchData },
+                'visitas': { nav: 'nav-visitas', view: 'view-visitas', color: 'bg-purple-600', loader: fetchVisitorsData },
+                'masiva': { nav: 'nav-masiva', view: 'view-masiva', color: 'bg-ejesa-blue', loader: () => {
+                    document.getElementById('masiva-fecha').value = new Date().toISOString().split('T')[0];
+                }},
+                'validaciones': { nav: 'nav-validaciones', view: 'view-validaciones', color: 'bg-blue-600', loader: fetchPendientes },
+                'reportes': { nav: 'nav-reportes', view: 'view-reportes', color: 'bg-emerald-600', loader: null }
+            };
+
+            Object.keys(views).forEach(k => {
+                document.getElementById(views[k].view).classList.replace('block', 'hidden');
+                document.getElementById(views[k].nav).className = k === 'validaciones' ? 
+                    "admin-nav-item w-full flex justify-between items-center hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition" :
+                    "admin-nav-item w-full flex items-center gap-3 hover:bg-slate-800 hover:text-white text-slate-300 px-4 py-3 rounded-xl font-medium transition";
+            });
+
+            const active = views[view];
+            document.getElementById(active.view).classList.replace('hidden', 'block');
+            document.getElementById(active.nav).className = view === 'validaciones' ?
+                `admin-nav-item w-full flex justify-between items-center text-white px-4 py-3 rounded-xl font-medium transition ${active.color}` :
+                `admin-nav-item w-full flex items-center gap-3 text-white px-4 py-3 rounded-xl font-medium transition ${active.color}`;
+            
+            if (active.loader) active.loader();
+                
+            if (view === 'reportes') {
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                const currentDay = today.toISOString().split('T')[0];
+                if(!document.getElementById('rep-start').value) {
+                    document.getElementById('rep-start').value = firstDay;
+                    document.getElementById('rep-end').value = currentDay;
+                }
+            }
+            if(window.innerWidth < 1024) toggleMobileSidebar(); 
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden');
+            }
+        }
+
+        function ejecutarCargaMasiva(e) {
+            e.preventDefault();
+            const institucion = document.getElementById('masiva-institucion').value.trim();
+            const cantidad = parseInt(document.getElementById('masiva-cantidad').value);
+            const tipoComida = document.getElementById('masiva-comida').value;
+            const fecha = document.getElementById('masiva-fecha').value;
+            const btn = document.getElementById('btn-masiva');
+
+            if(!institucion || !cantidad) { alert("Complete los campos obligatorios."); return; }
+            if(!confirm(`⚠️ ¿Está seguro de generar y registrar ${cantidad} consumos de ${tipoComida} para "${institucion}" bajo "Ticket Standard"? Se inyectarán directamente a las estadísticas.`)) return;
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generando lote...';
+            btn.disabled = true;
+
+            google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Generar y Registrar Lote Masivo';
+                btn.disabled = false;
+                if(res.success) {
+                    alert(res.message);
+                    document.getElementById('masiva-institucion').value = '';
+                    document.getElementById('masiva-cantidad').value = '30';
+                } else { alert("Error: " + res.message); }
+            }).adminCargaMasivaDelegacion({ institucion, cantidad, tipoComida, fecha, adminUser });
+        }
+
+        function fetchData() { google.script.run.withSuccessHandler(res => { if(res.success) { database = res.data; renderTable(); } }).adminGetEmployees(); }
+        function fetchVisitorsData() { google.script.run.withSuccessHandler(res => { if(res.success) { visitorsDB = res.data; renderVisitorsTable(); } }).adminGetVisitors(); }
+        function fetchPendientes() {
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) {
+                    pendientesDB = res.data; renderPendientesTable();
+                    const badge = document.getElementById('badge-validaciones');
+                    if(pendientesDB.length > 0) { badge.innerText = pendientesDB.length; badge.classList.remove('hidden'); }
+                    else { badge.classList.add('hidden'); }
+                }
+            }).adminGetPendientes();
+        }
+
+        function renderPendientesTable() {
+            const tbody = document.getElementById('pendientes-table-body');
+            tbody.innerHTML = '';
+            if(pendientesDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No hay validaciones pendientes.</td></tr>`; return;
+            }
+            pendientesDB.forEach(pend => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-slate-700">${pend.fechaConsumo}</td>
+                    <td class="p-4"><div class="font-bold text-slate-800">${pend.nombre}</div><div class="text-xs text-slate-500">${pend.empresa}</div></td>
+                    <td class="p-4 text-slate-600"><span class="bg-slate-100 px-2 py-1 rounded text-xs font-semibold">${pend.tipoPersona}</span></td>
+                    <td class="p-4 text-center font-bold text-slate-700">${pend.tipoComida}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="aprobarPendiente('${pend.id}')" class="bg-emerald-100 hover:bg-emerald-500 text-emerald-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Aprobar</button>
+                            <button onclick="rechazarPendiente('${pend.id}')" class="bg-rose-100 hover:bg-rose-500 text-rose-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Rechazar</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function aprobarPendiente(id) {
+            if(!confirm("¿Aprobar consumo?")) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) fetchPendientes(); else alert(res.message); }).adminAprobarPendiente(id, adminUser);
+        }
+        function rechazarPendiente(id) {
+            if(!confirm("¿Rechazar?")) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) fetchPendientes(); }).adminRechazarPendiente(id, adminUser);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('employee-table-body');
+            const query = document.getElementById('search-input').value.toLowerCase();
+            tbody.innerHTML = ''; 
+            let cAct = 0, cIn = 0;
+
+            if(database.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No hay personal registrado en la base.</td></tr>`;
+            }
+
+            database.forEach((emp, index) => {
+                if(emp.estado === 'Habilitado') cAct++; else cIn++;
+                if(query && !emp.name.toLowerCase().includes(query) && !emp.pin.includes(query) && !emp.empresa.toLowerCase().includes(query)) return;
+                
+                const isEnabled = emp.estado === 'Habilitado';
+                const statusBadge = isEnabled 
+                    ? `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Habilitado</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-ban"></i> Inactivo</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-slate-700">${emp.pin}</td>
+                    <td class="p-4 font-bold text-slate-800">${emp.name}</td>
+                    <td class="p-4">
+                        <div class="font-semibold text-slate-700">${emp.empresa}</div>
+                        <div class="text-xs text-slate-400">${emp.sector || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editEmployee(${index})" class="w-8 h-8 rounded-lg bg-blue-50 hover:bg-ejesa-blue text-ejesa-blue hover:text-white transition flex items-center justify-center shadow-sm border border-blue-100" title="Editar Personal">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="downloadTicketJPG(${index})" class="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white transition flex items-center justify-center shadow-sm border border-emerald-200" title="Descargar Ticket JPG para WhatsApp">
+                                <i class="fa-solid fa-id-card text-xs"></i>
+                            </button>
+                            <button onclick="deleteEmployee(${index})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white transition flex items-center justify-center shadow-sm border border-rose-100" title="Eliminar Personal">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('stat-total').innerText = database.length;
+            document.getElementById('stat-active').innerText = cAct;
+            document.getElementById('stat-inactive').innerText = cIn;
+        }
+
+        function renderVisitorsTable() {
+            const tbody = document.getElementById('visitor-table-body');
+            const query = document.getElementById('search-visitor-input').value.toLowerCase();
+            tbody.innerHTML = ''; 
+            let cAct = 0, cIn = 0;
+
+            if(visitorsDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400">No hay visitas autorizadas registradas.</td></tr>`;
+            }
+
+            visitorsDB.forEach((vis, index) => {
+                if(vis.estado === 'Habilitado') cAct++; else cIn++;
+                if(query && !vis.name.toLowerCase().includes(query) && !vis.empresa.toLowerCase().includes(query)) return;
+
+                const isEnabled = vis.estado === 'Habilitado';
+                const statusBadge = isEnabled 
+                    ? `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Habilitado</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-ban"></i> Inactiva</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">${vis.name}</td>
+                    <td class="p-4 font-semibold text-slate-600">${vis.empresa}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editVisitor(${index})" class="w-8 h-8 rounded-lg bg-purple-50 hover:bg-purple-600 text-purple-600 hover:text-white transition flex items-center justify-center shadow-sm border border-purple-100" title="Editar Visita">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteVisitor(${index})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white transition flex items-center justify-center shadow-sm border border-rose-100" title="Eliminar Visita">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            const elTot = document.getElementById('stat-visitas-total');
+            if(elTot) {
+                elTot.innerText = visitorsDB.length;
+                document.getElementById('stat-visitas-active').innerText = cAct;
+                document.getElementById('stat-visitas-inactive').innerText = cIn;
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('flex'); 
+            document.getElementById(id).classList.add('hidden'); 
+            if(id === 'modal-add-employee') {
+                document.getElementById('employee-form').reset();
+                document.getElementById('emp-index').value = '-1';
+                document.getElementById('emp-original-pin').value = '';
+                document.getElementById('modal-form-title').innerText = "Agregar Personal";
+            } else if(id === 'modal-add-visitor') {
+                document.getElementById('visitor-form').reset();
+                document.getElementById('vis-index').value = '-1';
+                document.getElementById('vis-original-name').value = '';
+                document.getElementById('modal-visitor-title').innerText = "Agregar Visita";
+            }
+        }
+
+        function generateReport() {
+            const startStr = document.getElementById('rep-start').value;
+            const endStr = document.getElementById('rep-end').value;
+            if(!startStr || !endStr) return;
+            google.script.run.withSuccessHandler(res => { if(res.success) processDashboardData(res.data); }).adminGetReports(startStr, endStr);
+        }
+
+        function processDashboardData(data) {
+            reportData = data; 
+            document.getElementById('dashboard-export-area').classList.remove('hidden');
+            let totMeals = data.length, totPers = 0, totVis = 0, excMeals = 0, audMeals = 0;
+            let statsPersonal = {}, statsVisitas = {}, indivPersonal = {}, indivVisitas = {}, listaEx = [];
+
+            data.forEach(row => {
+                const modoReg = (row.modoRegistro || "").toLowerCase();
+                
+                if (modoReg.includes("excepción")) { excMeals++; listaEx.push(row); }
+                else if (modoReg.includes("auditada") || modoReg.includes("masiva")) { audMeals++; }
+
+                let targetStats = row.tipoPersona.includes('Personal') ? (totPers++, statsPersonal) : (totVis++, statsVisitas);
+                let targetIndiv = row.tipoPersona.includes('Personal') ? indivPersonal : indivVisitas;
+
+                if(!targetStats[row.empresa]) targetStats[row.empresa] = { Desayuno: 0, Almuerzo: 0, Cena: 0, Total: 0 };
+                targetStats[row.empresa][row.tipoComida] = (targetStats[row.empresa][row.tipoComida] || 0) + 1;
+                targetStats[row.empresa].Total++;
+
+                let pKey = row.nombre + "|" + row.empresa;
+                if(!targetIndiv[pKey]) targetIndiv[pKey] = { nombre: row.nombre, empresa: row.empresa, total: 0 };
+                targetIndiv[pKey].total++;
+            });
+
+            document.getElementById('rep-kpi-total').innerText = totMeals;
+            document.getElementById('rep-kpi-personal').innerText = totPers;
+            document.getElementById('rep-kpi-visitas').innerText = totVis;
+            document.getElementById('rep-kpi-excepciones').innerText = excMeals;
+
+            renderReportTable('rep-body-personal', statsPersonal);
+            renderReportTable('rep-body-visitas', statsVisitas);
+            renderIndivTable('rep-body-pers-indiv', indivPersonal);
+            renderIndivTable('rep-body-vis-indiv', indivVisitas);
+
+            const normales = totMeals - excMeals - audMeals;
+            document.getElementById('chart-val-normal').innerText = normales;
+            document.getElementById('chart-val-exc').innerText = excMeals;
+            document.getElementById('chart-val-aud').innerText = audMeals;
+            renderChart(normales, excMeals, audMeals);
+            renderExcepcionesList(listaEx);
+        }
+
+        function renderExcepcionesList(lista) {
+            const listEl = document.getElementById('excepciones-list');
+            listEl.innerHTML = '';
+            if (lista.length === 0) { listEl.innerHTML = '<div class="text-slate-400 text-center py-2">Sin excepciones registradas.</div>'; return; }
+            lista.forEach(ex => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center border-b border-slate-50 pb-1";
+                div.innerHTML = `<span class="font-semibold text-slate-700">${ex.nombre}</span><span class="text-blue-500">${ex.tipoComida}</span>`;
+                listEl.appendChild(div);
+            });
+        }
+
+        function renderReportTable(tbodyId, statsObj) {
             const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
-            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin datos.</td></tr>`; return; }
-            data.forEach(item => {
-                tbody.innerHTML += `<tr class="border-b"><td class="p-4 font-bold">${item.dni || item.id || ''}</td><td class="p-4">${item.nombre}</td><td class="p-4">${item.empresa}</td><td class="p-4"><span class="bg-emerald-100 text-emerald-700 px-2 rounded">${item.estado}</span></td><td class="p-4"><button onclick="deleteRow('${tabla}', '${item.dni ? 'dni' : 'id'}', '${item.dni || item.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            Object.keys(statsObj).sort().forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-3 font-semibold">${emp}</td><td class="p-3 text-center">${statsObj[emp].Desayuno}</td><td class="p-3 text-center">${statsObj[emp].Almuerzo}</td><td class="p-3 text-center">${statsObj[emp].Cena}</td><td class="p-3 text-center font-bold bg-slate-50">${statsObj[emp].Total}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function renderIndivTable(tbodyId, indivObj) {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            Object.keys(indivObj).sort().forEach(key => {
+                const p = indivObj[key];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-3 font-semibold">${p.nombre}</td><td class="p-3 text-slate-500">${p.empresa}</td><td class="p-3 text-center font-bold bg-slate-50">${p.total}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function renderChart(n, e, a) {
+            if(exceptionChart) exceptionChart.destroy();
+            exceptionChart = new Chart(document.getElementById('chart-excepciones').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ['Estricto', 'Extraordinario', 'Auditada/Masiva'], datasets: [{ data: [n, e, a], backgroundColor: ['#10b981', '#2563eb', '#06b6d4'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+            });
+        }
+        
+        function exportCSV() {
+            if(reportData.length === 0) return;
+            let csv = "Fecha,Hora,Comida,Persona,ID,Nombre,Empresa,Modo\n";
+            reportData.forEach(r => { csv += `"${r.fecha}","${r.hora}","${r.tipoComida}","${r.tipoPersona}","${r.identificacion}","${r.nombre}","${r.empresa}","${r.modoRegistro}"\n`; });
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+            link.download = `Auditoria_${document.getElementById('rep-start').value}.csv`; link.click();
+        }
+        
+        function downloadDashboardJPG() {
+            const target = document.getElementById('dashboard-export-area');
+            html2canvas(target, { 
+                scale: 2,
+                backgroundColor: '#f8fafc',
+                windowWidth: 1280,
+                onclone: (clonedDoc) => {
+                    const clonedArea = clonedDoc.getElementById('dashboard-export-area');
+                    clonedArea.style.width = '1200px';
+                    clonedArea.style.maxWidth = '1200px';
+                    clonedArea.style.padding = '24px';
+                    clonedArea.style.margin = '0 auto';
+                    clonedArea.querySelectorAll('.overflow-x-auto, .max-h-48').forEach(el => {
+                        el.style.overflow = 'visible';
+                        el.style.maxHeight = 'none';
+                    });
+                }
+            }).then(canvas => {
+                const link = document.createElement('a'); 
+                link.download = `Dashboard_Catering_${document.getElementById('rep-start').value}_al_${document.getElementById('rep-end').value}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.92); 
+                link.click();
             });
         }
 
-        async function saveEmployee(e) {
-            e.preventDefault(); const p = document.getElementById('emp-pin').value, n = document.getElementById('emp-name').value, c = document.getElementById('emp-comp').value, s = document.getElementById('emp-stat').value;
-            await db.from('Personal').upsert({ dni: p, nombre: n, empresa: c, estado: s, telefono: '', sector: '' });
-            document.getElementById('modal-add').classList.add('hidden'); document.getElementById('emp-pin').value = ''; document.getElementById('emp-name').value = '';
-            fetchData('Personal', 'employee-table-body');
+        function saveEmployee(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('emp-index').value);
+            const orig = document.getElementById('emp-original-pin').value;
+            const isNew = idx === -1;
+            const btn = document.getElementById('btn-save-emp');
+            btn.innerText = 'Guardando...'; btn.disabled = true;
+            
+            const empData = {
+                pin: document.getElementById('emp-pin').value.trim(),
+                name: document.getElementById('emp-name').value.trim(),
+                empresa: document.getElementById('emp-company').value.trim(),
+                sector: document.getElementById('emp-sector').value.trim(),
+                phone: document.getElementById('emp-phone').value.trim(),
+                estado: document.getElementById('emp-status').value
+            };
+            google.script.run.withSuccessHandler(res => {
+                btn.innerText = 'Guardar'; btn.disabled = false;
+                if(res.success) { closeModal('modal-add-employee'); fetchData(); } else alert(res.message);
+            }).adminSaveEmployee(empData, isNew, orig);
+        }
+        
+        function generateRandomPin() {
+            let n;
+            let unique = false;
+            while(!unique) {
+                n = Math.floor(100 + Math.random() * 900).toString();
+                if(!database.some(e => e.pin === n)) unique = true;
+            }
+            document.getElementById('emp-pin').value = n;
         }
 
-        async function deleteRow(tabla, col, id) {
-            if(confirm("¿Eliminar registro?")) { await db.from(tabla).delete().eq(col, id); fetchData(tabla, tabla === 'Personal' ? 'employee-table-body' : 'visitor-table-body'); }
+        function editEmployee(idx) {
+            const e = database[idx];
+            document.getElementById('emp-index').value = idx;
+            document.getElementById('emp-original-pin').value = e.pin;
+            document.getElementById('emp-pin').value = e.pin;
+            document.getElementById('emp-name').value = e.name;
+            document.getElementById('emp-company').value = e.empresa;
+            document.getElementById('emp-sector').value = e.sector;
+            document.getElementById('emp-phone').value = e.phone;
+            document.getElementById('emp-status').value = e.estado;
+            document.getElementById('modal-form-title').innerText = "Editar Personal";
+            openModal('modal-add-employee');
         }
 
-        async function fetchPendientes() {
-            const { data } = await db.from('ValidacionesPendientes').select('*').eq('estado', 'Pendiente');
-            const tbody = document.getElementById('pendientes-table-body'); tbody.innerHTML = '';
-            document.getElementById('badge-val').innerText = data ? data.length : 0;
-            document.getElementById('badge-val').classList.toggle('hidden', !data || data.length === 0);
-            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Todo al día.</td></tr>`; return; }
-            data.forEach(p => {
-                tbody.innerHTML += `<tr class="border-b"><td class="p-4">${p.fecha_consumo}</td><td class="p-4 font-bold">${p.nombre}</td><td class="p-4">${p.tipo_comida}</td><td class="p-4"><button onclick="aprobar('${p.id}')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded font-bold mr-2">Aprobar</button><button onclick="rechazar('${p.id}')" class="bg-red-100 text-red-700 px-3 py-1 rounded font-bold">Rechazar</button></td></tr>`;
+        function deleteEmployee(idx) {
+            const emp = database[idx];
+            if(!confirm(`⚠️ ¿Está seguro que desea ELIMINAR a ${emp.name} (PIN: ${emp.pin})?`)) return;
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) fetchData(); else alert(res.message);
+            }).adminDeleteEmployee(emp.pin);
+        }
+
+        function downloadTicketJPG(idx) {
+            const emp = database[idx];
+            document.getElementById('ticket-name').innerText = emp.name;
+            document.getElementById('ticket-company').innerText = emp.empresa + (emp.sector ? ' - ' + emp.sector : '');
+            document.getElementById('ticket-pin').innerText = emp.pin;
+            
+            const now = new Date();
+            document.getElementById('ticket-date').innerText = now.toLocaleDateString('es-AR');
+
+            const ticketCard = document.getElementById('ticket-content');
+            html2canvas(ticketCard, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Credencial_${emp.name.replace(/\s+/g, '_')}_PIN_${emp.pin}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
             });
         }
-        async function aprobar(id) { 
-            const { data: p } = await db.from('ValidacionesPendientes').select('*').eq('id', id).single();
-            await db.from('RegistrosConsumo').insert([{ fecha: p.fecha_consumo, hora: '12:00', tipo_comida: p.tipo_comida, tipo_persona: p.tipo_persona, identificacion: p.identificacion, nombre: p.nombre, empresa: p.empresa, modo_registro: 'Carga Auditada', usuario_tablet: adminUser }]);
-            await db.from('ValidacionesPendientes').update({ estado: 'Aprobado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); 
-        }
-        async function rechazar(id) { await db.from('ValidacionesPendientes').update({ estado: 'Rechazado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); }
 
-        async function ejecutarCargaMasiva(e) {
-            e.preventDefault(); const inst = document.getElementById('masiva-inst').value, cant = document.getElementById('masiva-cant').value, tc = document.getElementById('masiva-comida').value;
-            const lote = []; const hoy = new Date().toLocaleDateString('en-CA');
-            for(let i=0; i<cant; i++) { lote.push({ fecha: hoy, hora: '12:00', tipo_comida: tc, tipo_persona: 'Visita Masiva', identificacion: 'LOTE-'+Date.now(), nombre: 'Ticket Standard', empresa: inst, modo_registro: 'Carga Masiva Delegación', usuario_tablet: adminUser }); }
-            await db.from('RegistrosConsumo').insert(lote); alert("¡Lote registrado con éxito!"); document.getElementById('masiva-inst').value = '';
+        function saveVisitor(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('vis-index').value);
+            const orig = document.getElementById('vis-original-name').value;
+            const isNew = idx === -1;
+            const btn = document.getElementById('btn-save-vis');
+            btn.innerText = 'Guardando...'; btn.disabled = true;
+
+            const visData = {
+                name: document.getElementById('vis-name').value.trim(),
+                empresa: document.getElementById('vis-company').value.trim(),
+                estado: document.getElementById('vis-status').value
+            };
+            google.script.run.withSuccessHandler(res => {
+                btn.innerText = 'Guardar'; btn.disabled = false;
+                if(res.success) { closeModal('modal-add-visitor'); fetchVisitorsData(); } else alert(res.message);
+            }).adminSaveVisitor(visData, isNew, orig);
         }
 
-        async function generateReport() {
-            const s = document.getElementById('rep-start').value, e = document.getElementById('rep-end').value;
-            const { data } = await db.from('RegistrosConsumo').select('*').gte('fecha', s).lte('fecha', e);
-            document.getElementById('rep-kpi-total').innerText = data.length;
-            let pers=0, vis=0, exc=0, empresas = {};
-            data.forEach(r => {
-                if(r.tipo_persona === 'Personal') pers++; else vis++;
-                if(r.modo_registro.includes('Excepción')) exc++;
-                if(!empresas[r.empresa]) empresas[r.empresa] = 0; empresas[r.empresa]++;
-            });
-            document.getElementById('rep-kpi-pers').innerText = pers; document.getElementById('rep-kpi-vis').innerText = vis; document.getElementById('rep-kpi-exc').innerText = exc;
-            const tbody = document.getElementById('rep-body-empresa'); tbody.innerHTML = '';
-            Object.keys(empresas).sort().forEach(emp => { tbody.innerHTML += `<tr class="border-b"><td class="p-3 font-semibold">${emp}</td><td class="p-3 font-bold">${empresas[emp]}</td></tr>`; });
+        function editVisitor(idx) {
+            const v = visitorsDB[idx];
+            document.getElementById('vis-index').value = idx;
+            document.getElementById('vis-original-name').value = v.name;
+            document.getElementById('vis-name').value = v.name;
+            document.getElementById('vis-company').value = v.empresa;
+            document.getElementById('vis-status').value = v.estado;
+            document.getElementById('modal-visitor-title').innerText = "Editar Visita";
+            openModal('modal-add-visitor');
+        }
+
+        function deleteVisitor(idx) {
+            const v = visitorsDB[idx];
+            if(!confirm(`⚠️ ¿Está seguro que desea ELIMINAR la visita autorizada "${v.name}"?`)) return;
+            google.script.run.withSuccessHandler(res => {
+                if(res.success) fetchVisitorsData(); else alert(res.message);
+            }).adminDeleteVisitor(v.name);
         }
     </script>
 </body>
