@@ -3,104 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Servicio Catering - Admin Supabase</title>
+    <title>Servicio Catering - Admin</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0047AB">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Librería Oficial de Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ENLACE CORREGIDO: Supabase UMD -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { ejesa: { blue: '#0047AB', cyan: '#00B4D8', dark: '#0B132B' } },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { ejesa: { blue: '#0047AB', cyan: '#00B4D8', dark: '#0B132B' } }, fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
     </script>
 </head>
 <body class="h-full flex flex-col font-sans antialiased text-slate-800">
 
     <div id="login-screen" class="fixed inset-0 bg-ejesa-dark z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-ejesa-blue text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg">
-                    <i class="fa-solid fa-user-shield"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-slate-900">Portal Admin Supabase</h2>
-                <p class="text-slate-500 text-sm">Gestión de Alta Velocidad</p>
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-ejesa-blue text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg"><i class="fa-solid fa-user-shield"></i></div>
+                <h2 class="text-2xl font-bold text-slate-900">Portal Admin</h2>
+                <p class="text-slate-500 text-sm">Base de Datos PostgreSQL (Supabase)</p>
             </div>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Usuario</label>
-                    <input type="text" id="adminUser" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-ejesa-blue outline-none" placeholder="admin o cocina">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Contraseña</label>
-                    <input type="password" id="adminPass" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-ejesa-blue outline-none" placeholder="••••••••">
-                </div>
-                <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-center font-medium"></div>
-                <button type="submit" id="btnLogin" class="w-full bg-ejesa-blue hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition">Ingresar al Panel</button>
+            <form onsubmit="handleLogin(event)" class="space-y-5">
+                <input type="text" id="adminUser" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Usuario">
+                <input type="password" id="adminPass" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Contraseña">
+                <div id="loginError" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg text-center font-medium"></div>
+                <button type="submit" id="btnLogin" class="w-full bg-ejesa-blue text-white font-bold py-3.5 rounded-xl shadow-lg transition">Ingresar</button>
             </form>
-            <div class="mt-6 pt-4 border-t border-slate-100 text-center space-y-1">
-                <p class="text-xs font-bold text-slate-700">Fabian R. Martinez &bull; Soluciones Informáticas</p>
-            </div>
         </div>
     </div>
 
     <div id="dashboard-screen" class="hidden h-full flex-col">
-        <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shrink-0 shadow-sm z-30">
-            <div class="flex items-center gap-3">
-                <div class="bg-ejesa-blue text-white font-bold px-3 py-1.5 rounded-lg text-lg tracking-wider shadow">EJESA</div>
-                <h1 class="text-lg font-bold text-slate-800">Panel Administrativo</h1>
-            </div>
-            <div class="flex items-center gap-3">
-                <span id="header-user-name" class="text-sm font-medium text-slate-500"></span>
-                <button onclick="logout()" class="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-3 py-2 rounded-lg font-medium transition">Salir</button>
-            </div>
+        <header class="bg-white border-b px-4 py-3 flex justify-between items-center shadow-sm z-30">
+            <div class="flex items-center gap-3"><div class="bg-ejesa-blue text-white font-bold px-3 py-1.5 rounded-lg">EJESA</div><h1 class="text-lg font-bold">Panel Admin</h1></div>
+            <div class="flex items-center gap-3"><span id="header-user-name" class="text-sm font-medium text-slate-500"></span><button onclick="logout()" class="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg font-medium">Salir</button></div>
         </header>
 
-        <div class="flex flex-1 overflow-hidden relative">
+        <div class="flex flex-1 overflow-hidden">
             <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 p-4">
                 <nav class="space-y-1">
-                    <button onclick="switchView('personal')" id="nav-personal" class="w-full text-left bg-ejesa-blue text-white px-4 py-3 rounded-xl font-medium">Personal Planta</button>
-                    <button onclick="switchView('reportes')" id="nav-reportes" class="w-full text-left hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium">Reportes y Estadísticas</button>
+                    <button onclick="switchView('personal')" id="nav-personal" class="w-full flex gap-3 items-center bg-ejesa-blue text-white px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-users w-5"></i> Personal</button>
+                    <button onclick="switchView('visitas')" id="nav-visitas" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-handshake w-5"></i> Visitas</button>
+                    <button onclick="switchView('masiva')" id="nav-masiva" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-bus w-5"></i> Lotes Masivos</button>
+                    <button onclick="switchView('validaciones')" id="nav-validaciones" class="w-full flex justify-between items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium">
+                        <div class="flex gap-3"><i class="fa-solid fa-check-double w-5"></i> Validaciones</div><span id="badge-val" class="hidden bg-blue-500 text-white text-[10px] px-2 rounded-full">0</span>
+                    </button>
+                    <button onclick="switchView('reportes')" id="nav-reportes" class="w-full flex gap-3 items-center hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-medium"><i class="fa-solid fa-chart-pie w-5"></i> Reportes</button>
                 </nav>
             </aside>
 
             <main class="flex-1 bg-slate-50 p-6 overflow-y-auto">
+                <!-- VISTA PERSONAL -->
                 <div id="view-personal" class="space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800">Directorio de Personal</h2>
-                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b">
-                                    <th class="p-4">PIN / DNI</th>
-                                    <th class="p-4">Nombre y Apellido</th>
-                                    <th class="p-4">Empresa</th>
-                                    <th class="p-4">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="employee-table-body" class="text-sm divide-y">
-                                <tr><td colspan="4" class="p-6 text-center text-slate-400">Cargando desde Supabase...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-800">Directorio de Personal</h2>
+                        <button onclick="document.getElementById('modal-add').classList.remove('hidden')" class="bg-emerald-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg"><i class="fa-solid fa-plus"></i> Nuevo Empleado</button>
+                    </div>
+                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse"><thead class="bg-slate-50 border-b"><tr><th class="p-4">PIN / DNI</th><th class="p-4">Nombre</th><th class="p-4">Empresa</th><th class="p-4">Estado</th><th class="p-4 text-center">Acciones</th></tr></thead><tbody id="employee-table-body" class="text-sm divide-y"></tbody></table>
                     </div>
                 </div>
 
+                <!-- VISTA VISITAS -->
+                <div id="view-visitas" class="space-y-6 hidden">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-800">Directorio de Visitas</h2>
+                    </div>
+                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse"><thead class="bg-slate-50 border-b"><tr><th class="p-4">Nombre</th><th class="p-4">Empresa</th><th class="p-4">Estado</th></tr></thead><tbody id="visitor-table-body" class="text-sm divide-y"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- VISTA CARGA MASIVA -->
+                <div id="view-masiva" class="space-y-6 max-w-xl mx-auto hidden">
+                    <div class="bg-white rounded-3xl shadow-xl border p-8 space-y-6">
+                        <h2 class="text-xl font-bold text-slate-800">Carga Masiva Directa</h2>
+                        <form onsubmit="ejecutarCargaMasiva(event)" class="space-y-4">
+                            <input type="text" id="masiva-inst" required placeholder="Institución / Delegación" class="w-full px-4 py-3 border rounded-xl">
+                            <div class="flex gap-4">
+                                <input type="number" id="masiva-cant" required min="1" value="30" class="w-full px-4 py-3 border rounded-xl" title="Cantidad">
+                                <select id="masiva-comida" class="w-full px-4 py-3 border rounded-xl"><option value="Almuerzo">Almuerzo</option><option value="Cena">Cena</option></select>
+                            </div>
+                            <button type="submit" class="w-full bg-ejesa-blue text-white font-bold py-3.5 rounded-xl">Generar Lote Masivo</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- VISTA VALIDACIONES -->
+                <div id="view-validaciones" class="space-y-6 hidden">
+                    <h2 class="text-2xl font-bold text-slate-800">Auditoría Pendientes</h2>
+                    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse"><thead class="bg-blue-50 border-b"><tr><th class="p-4">Fecha</th><th class="p-4">Persona</th><th class="p-4">Comida</th><th class="p-4 text-center">Acción</th></tr></thead><tbody id="pendientes-table-body" class="text-sm divide-y"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- VISTA REPORTES -->
                 <div id="view-reportes" class="space-y-6 hidden">
-                    <h2 class="text-2xl font-bold text-slate-800">Reportes de Consumo</h2>
-                    <p class="text-slate-500 text-sm">Consultas en tiempo real conectadas a PostgreSQL.</p>
+                    <div class="flex gap-4 bg-white p-4 rounded-xl border">
+                        <input type="date" id="rep-start" class="border p-2 rounded">
+                        <input type="date" id="rep-end" class="border p-2 rounded">
+                        <button onclick="generateReport()" class="bg-emerald-600 text-white px-6 rounded-lg font-bold">Generar</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Total</p><p class="text-3xl font-black" id="rep-kpi-total">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Personal</p><p class="text-3xl font-black text-blue-600" id="rep-kpi-pers">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Visitas</p><p class="text-3xl font-black text-purple-600" id="rep-kpi-vis">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Excepciones</p><p class="text-3xl font-black text-rose-600" id="rep-kpi-exc">0</p></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl border">
+                        <h3 class="font-bold mb-4">Consumos Totales por Empresa</h3>
+                        <table class="w-full text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">Empresa</th><th class="p-3">Total Consumido</th></tr></thead><tbody id="rep-body-empresa" class="text-sm divide-y"></tbody></table>
+                    </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR PERSONAL -->
+    <div id="modal-add" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold">Guardar Personal (Supabase)</h3>
+            <form onsubmit="saveEmployee(event)" class="space-y-4">
+                <div class="flex gap-4"><input type="text" id="emp-name" placeholder="Nombre Completo" required class="w-full border p-2 rounded"><input type="text" id="emp-pin" placeholder="PIN/DNI" required class="w-full border p-2 rounded"></div>
+                <div class="flex gap-4"><input type="text" id="emp-comp" placeholder="Empresa" required class="w-full border p-2 rounded"><select id="emp-stat" class="w-full border p-2 rounded"><option value="Habilitado">Habilitado</option><option value="Deshabilitado">Inactivo</option></select></div>
+                <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="document.getElementById('modal-add').classList.add('hidden')" class="px-4 py-2 bg-slate-200 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold">Guardar BD</button></div>
+            </form>
         </div>
     </div>
 
@@ -109,73 +144,97 @@
         const SUPABASE_KEY = 'sb_publishable_o23qFllIDQ4SfFanUftyTQ_Zh_py4yK';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let adminUser = null, userRole = 'admin';
+        let adminUser = null;
 
         window.onload = function() {
-            const u = sessionStorage.getItem('admin_user');
-            if (u) { adminUser = u; showDashboard(); }
+            const u = sessionStorage.getItem('admin_user'); if (u) { adminUser = u; showDashboard(); }
+            document.getElementById('rep-start').value = new Date().toLocaleDateString('en-CA');
+            document.getElementById('rep-end').value = new Date().toLocaleDateString('en-CA');
         };
 
         async function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('adminUser').value.trim();
-            const p = document.getElementById('adminPass').value.trim();
-            const err = document.getElementById('loginError');
-
-            const { data, error } = await supabase
-                .from('Credenciales')
-                .select('*')
-                .eq('usuario', u)
-                .eq('password', p)
-                .single();
-
-            if (error || !data) {
-                err.innerText = 'Credenciales incorrectas.';
-                err.classList.remove('hidden');
-            } else {
-                adminUser = data.descripcion;
-                userRole = data.rol;
-                sessionStorage.setItem('admin_user', adminUser);
-                showDashboard();
-            }
+            e.preventDefault(); const u = document.getElementById('adminUser').value.trim(); const p = document.getElementById('adminPass').value.trim();
+            const { data, error } = await supabase.from('Credenciales').select('*').eq('usuario', u).eq('password', p).single();
+            if (error || !data || data.rol === 'comedor') { document.getElementById('loginError').innerText = 'Acceso Denegado.'; document.getElementById('loginError').classList.remove('hidden'); } 
+            else { adminUser = data.descripcion; sessionStorage.setItem('admin_user', adminUser); showDashboard(); }
         }
 
         function showDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.remove('hidden');
-            document.getElementById('dashboard-screen').classList.add('flex');
+            document.getElementById('login-screen').classList.add('hidden'); document.getElementById('dashboard-screen').classList.remove('hidden'); document.getElementById('dashboard-screen').classList.add('flex');
             document.getElementById('header-user-name').innerText = adminUser;
-            fetchEmployees();
-        }
-
-        async function fetchEmployees() {
-            const { data, error } = await supabase.from('Personal').select('*');
-            const tbody = document.getElementById('employee-table-body');
-            tbody.innerHTML = '';
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">Sin registros en la base.</td></tr>`;
-                return;
-            }
-            data.forEach(emp => {
-                tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-4 font-mono font-bold">${emp.dni}</td>
-                        <td class="p-4 font-bold">${emp.nombre}</td>
-                        <td class="p-4">${emp.empresa}</td>
-                        <td class="p-4"><span class="px-2 py-1 rounded text-xs bg-emerald-100 text-emerald-700">${emp.estado}</span></td>
-                    </tr>
-                `;
-            });
+            switchView('personal'); fetchPendientes();
         }
 
         function switchView(v) {
-            document.getElementById('view-personal').classList.toggle('hidden', v !== 'personal');
-            document.getElementById('view-reportes').classList.toggle('hidden', v !== 'reportes');
+            ['personal', 'visitas', 'masiva', 'validaciones', 'reportes'].forEach(x => { document.getElementById('view-'+x).classList.add('hidden'); document.getElementById('nav-'+x).classList.remove('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+x).classList.add('text-slate-300'); });
+            document.getElementById('view-'+v).classList.remove('hidden'); document.getElementById('nav-'+v).classList.add('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+v).classList.remove('text-slate-300');
+            if(v==='personal') fetchData('Personal', 'employee-table-body');
+            if(v==='visitas') fetchData('VisitasAutorizadas', 'visitor-table-body');
         }
 
-        function logout() {
-            sessionStorage.clear();
-            location.reload();
+        function logout() { sessionStorage.clear(); location.reload(); }
+
+        // MÓDULO: CRUD PERSONAL Y VISITAS
+        async function fetchData(tabla, tbodyId) {
+            const { data } = await supabase.from(tabla).select('*').order('nombre');
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin datos.</td></tr>`; return; }
+            data.forEach(item => {
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4 font-bold">${item.dni || item.id || ''}</td><td class="p-4">${item.nombre}</td><td class="p-4">${item.empresa}</td><td class="p-4"><span class="bg-emerald-100 text-emerald-700 px-2 rounded">${item.estado}</span></td><td class="p-4"><button onclick="deleteRow('${tabla}', '${item.dni ? 'dni' : 'id'}', '${item.dni || item.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+        }
+
+        async function saveEmployee(e) {
+            e.preventDefault(); const p = document.getElementById('emp-pin').value, n = document.getElementById('emp-name').value, c = document.getElementById('emp-comp').value, s = document.getElementById('emp-stat').value;
+            await supabase.from('Personal').upsert({ dni: p, nombre: n, empresa: c, estado: s, telefono: '', sector: '' });
+            document.getElementById('modal-add').classList.add('hidden'); document.getElementById('emp-pin').value = ''; document.getElementById('emp-name').value = '';
+            fetchData('Personal', 'employee-table-body');
+        }
+
+        async function deleteRow(tabla, col, id) {
+            if(confirm("¿Eliminar registro?")) { await supabase.from(tabla).delete().eq(col, id); fetchData(tabla, tabla === 'Personal' ? 'employee-table-body' : 'visitor-table-body'); }
+        }
+
+        // MÓDULO: VALIDACIONES
+        async function fetchPendientes() {
+            const { data } = await supabase.from('ValidacionesPendientes').select('*').eq('estado', 'Pendiente');
+            const tbody = document.getElementById('pendientes-table-body'); tbody.innerHTML = '';
+            document.getElementById('badge-val').innerText = data ? data.length : 0;
+            document.getElementById('badge-val').classList.toggle('hidden', !data || data.length === 0);
+            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Todo al día.</td></tr>`; return; }
+            data.forEach(p => {
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4">${p.fecha_consumo}</td><td class="p-4 font-bold">${p.nombre}</td><td class="p-4">${p.tipo_comida}</td><td class="p-4"><button onclick="aprobar('${p.id}')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded font-bold mr-2">Aprobar</button><button onclick="rechazar('${p.id}')" class="bg-red-100 text-red-700 px-3 py-1 rounded font-bold">Rechazar</button></td></tr>`;
+            });
+        }
+        async function aprobar(id) { 
+            const { data: p } = await supabase.from('ValidacionesPendientes').select('*').eq('id', id).single();
+            await supabase.from('RegistrosConsumo').insert([{ fecha: p.fecha_consumo, hora: '12:00', tipo_comida: p.tipo_comida, tipo_persona: p.tipo_persona, identificacion: p.identificacion, nombre: p.nombre, empresa: p.empresa, modo_registro: 'Carga Auditada', usuario_tablet: adminUser }]);
+            await supabase.from('ValidacionesPendientes').update({ estado: 'Aprobado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); 
+        }
+        async function rechazar(id) { await supabase.from('ValidacionesPendientes').update({ estado: 'Rechazado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); }
+
+        // MÓDULO: MASIVA
+        async function ejecutarCargaMasiva(e) {
+            e.preventDefault(); const inst = document.getElementById('masiva-inst').value, cant = document.getElementById('masiva-cant').value, tc = document.getElementById('masiva-comida').value;
+            const lote = []; const hoy = new Date().toLocaleDateString('en-CA');
+            for(let i=0; i<cant; i++) { lote.push({ fecha: hoy, hora: '12:00', tipo_comida: tc, tipo_persona: 'Visita Masiva', identificacion: 'LOTE-'+Date.now(), nombre: 'Ticket Standard', empresa: inst, modo_registro: 'Carga Masiva Delegación', usuario_tablet: adminUser }); }
+            await supabase.from('RegistrosConsumo').insert(lote); alert("¡Lote registrado con éxito!"); document.getElementById('masiva-inst').value = '';
+        }
+
+        // MÓDULO: REPORTES
+        async function generateReport() {
+            const s = document.getElementById('rep-start').value, e = document.getElementById('rep-end').value;
+            const { data } = await supabase.from('RegistrosConsumo').select('*').gte('fecha', s).lte('fecha', e);
+            document.getElementById('rep-kpi-total').innerText = data.length;
+            let pers=0, vis=0, exc=0, empresas = {};
+            data.forEach(r => {
+                if(r.tipo_persona === 'Personal') pers++; else vis++;
+                if(r.modo_registro.includes('Excepción')) exc++;
+                if(!empresas[r.empresa]) empresas[r.empresa] = 0; empresas[r.empresa]++;
+            });
+            document.getElementById('rep-kpi-pers').innerText = pers; document.getElementById('rep-kpi-vis').innerText = vis; document.getElementById('rep-kpi-exc').innerText = exc;
+            const tbody = document.getElementById('rep-body-empresa'); tbody.innerHTML = '';
+            Object.keys(empresas).sort().forEach(emp => { tbody.innerHTML += `<tr class="border-b"><td class="p-3 font-semibold">${emp}</td><td class="p-3 font-bold">${empresas[emp]}</td></tr>`; });
         }
     </script>
 </body>

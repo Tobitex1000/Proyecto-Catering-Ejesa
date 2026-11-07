@@ -5,20 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Servicio Catering - EJESA</title>
     
-    <!-- Configuración PWA y Marcadores de Iconos -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0047AB">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Servicio Catering">
     <link rel="apple-touch-icon" href="./icon-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Librería Oficial de Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ENLACE CORREGIDO: Librería Oficial de Supabase para Navegadores -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; -webkit-user-select: none; }
@@ -39,10 +36,10 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="btnSync" onclick="cargarDatosBase()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm px-4 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/20" title="Sincronizar base de datos">
+            <button id="btnSync" onclick="cargarDatosBase()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm px-4 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-lg">
                 <span>🔄</span> Sincronizar
             </button>
-            <button id="menuHamburgerBtn" onclick="toggleMenu()" class="hidden text-slate-300 hover:text-white p-2 rounded-xl bg-slate-800 border border-slate-700 hover:border-slate-500 focus:outline-none transition">
+            <button id="menuHamburgerBtn" onclick="toggleMenu()" class="hidden text-slate-300 hover:text-white p-2 rounded-xl bg-slate-800 border border-slate-700 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
         </div>
@@ -50,24 +47,22 @@
         <div id="mobileMenu" class="hidden absolute top-full right-2 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 flex-col gap-3 origin-top-right transition-all">
             <div class="border-b border-slate-700 pb-3 text-center">
                 <h1 class="text-base font-bold tracking-tight text-white">SERVICIO CATERING</h1>
-                <p class="text-[10px] text-blue-400">Control Inteligente con Supabase</p>
+                <p class="text-[10px] text-blue-400">Motor Supabase SQL</p>
             </div>
-            
             <div id="userInfoHeader" class="hidden flex-col gap-2">
                 <span id="txtUserRole" class="text-xs bg-slate-900 text-slate-300 px-3 py-2.5 rounded-lg border border-slate-700 font-medium text-center truncate"></span>
             </div>
-
             <div class="flex flex-col gap-2 pt-1" id="menuOptionsContainer">
                 <button onclick="toggleFullScreen(); toggleMenu();" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm px-4 py-3 rounded-xl font-medium transition flex items-center justify-center gap-2">
                     <span>⛶</span> Pantalla Completa
                 </button>
-                <button id="menuBtnOlvido" onclick="abrirModalOlvido()" class="hidden w-full bg-rose-900 hover:bg-rose-800 text-white text-sm px-4 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-md border-2 border-rose-700 mt-1">
-                    <span>⚠️</span> Carga Excepcional (Alerta Roja)
+                <button id="menuBtnOlvido" onclick="abrirModalOlvido()" class="hidden w-full bg-rose-900 hover:bg-rose-800 text-white text-sm px-4 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border-2 border-rose-700 mt-1">
+                    <span>⚠️</span> Carga Excepcional (Olvido)
                 </button>
                 <button id="menuBtnHistorial" onclick="abrirModalHistorialCocina()" class="hidden w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm px-4 py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 border border-slate-600 mt-1">
-                    <span>📊</span> Estadísticas e Historial Cocina
+                    <span>📊</span> Estadísticas Cocina
                 </button>
-                <button onclick="cerrarSesion()" class="w-full text-sm text-white bg-red-600 hover:bg-red-500 px-4 py-3 rounded-xl font-bold transition shadow-lg shadow-red-900/20 mt-1">
+                <button onclick="cerrarSesion()" class="w-full text-sm text-white bg-red-600 hover:bg-red-500 px-4 py-3 rounded-xl font-bold transition mt-1">
                     Cerrar Sesión
                 </button>
             </div>
@@ -79,19 +74,19 @@
         <div id="viewLogin" class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 sm:p-8 mx-auto mt-4">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-white">Acceso a Terminal</h2>
-                <p class="text-sm text-slate-400 mt-1">Ingrese credenciales de Supabase</p>
+                <p class="text-sm text-slate-400 mt-1">Credenciales DB Supabase</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuario</label>
-                    <input type="text" id="loginUser" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition" placeholder="Ej. cocina o comedor">
+                    <input type="text" id="loginUser" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Contraseña</label>
-                    <input type="password" id="loginPass" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition" placeholder="••••••••">
+                    <input type="password" id="loginPass" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 transition">
                 </div>
                 <div id="loginError" class="hidden text-sm text-red-400 bg-red-950/50 p-3 rounded-xl border border-red-800 text-center"></div>
-                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition duration-200">Ingresar al Sistema</button>
+                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition">Ingresar al Sistema</button>
                 
                 <div class="pt-4 border-t border-slate-700 text-center">
                     <button type="button" onclick="abrirPortalAdmin()" class="text-xs text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 mx-auto">
@@ -103,7 +98,6 @@
 
         <!-- APP VIEW -->
         <div id="viewApp" class="hidden w-full max-w-4xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 mx-auto">
-            
             <div class="mb-6 md:mb-8">
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-center sm:text-left">
                     <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Seleccione el Tipo de Comida</h3>
@@ -138,8 +132,8 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Ingrese PIN del empleado:</label>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input type="password" id="inputPinPersonal" class="w-full sm:flex-grow px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-lg tracking-widest focus:outline-none focus:border-blue-500 transition text-center sm:text-left" placeholder="••••">
-                        <button id="btnRegistrarPersonal" onclick="procesarFichajePersonal()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition">Registrar</button>
+                        <input type="password" id="inputPinPersonal" class="w-full sm:flex-grow px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-lg tracking-widest focus:outline-none focus:border-blue-500 text-center sm:text-left">
+                        <button id="btnRegistrarPersonal" onclick="procesarFichajePersonal()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition">Registrar</button>
                     </div>
                 </div>
             </div>
@@ -151,48 +145,104 @@
                         <option value="">-- Seleccione una visita --</option>
                     </select>
                 </div>
-                <button id="btnRegistrarVisita" onclick="procesarFichajeVisita()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg transition">Registrar Consumo</button>
+                <button id="btnRegistrarVisita" onclick="procesarFichajeVisita()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl transition">Registrar Consumo</button>
             </div>
 
             <div id="feedbackBox" class="mt-4 sm:mt-6 hidden p-3 sm:p-4 rounded-xl text-center font-bold text-sm sm:text-lg"></div>
         </div>
     </main>
 
-    <!-- FOOTER CORPORATIVO PROFESIONAL PERMANENTE -->
-    <footer class="bg-slate-950 border-t border-blue-900/40 py-3 px-4 text-center text-xs text-slate-400 shrink-0 shadow-inner z-30">
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="bg-slate-950 border-t border-blue-900/40 py-3 px-4 text-center text-xs text-slate-400 shrink-0">
         <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-                <span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-bold tracking-wider text-[10px] uppercase">
-                    <i class="fa-solid fa-laptop-code mr-1"></i>Soluciones Informáticas
-                </span>
+                <span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-bold tracking-wider text-[10px] uppercase">Soluciones Informáticas</span>
                 <span class="font-bold text-slate-200">Fabian R. Martinez</span>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
-                <span><i class="fa-solid fa-id-card text-slate-500 mr-1"></i>CUIL: <b class="text-slate-300">20-36486308-0</b></span>
+                <span>CUIL: <b class="text-slate-300">20-36486308-0</b></span>
                 <span class="hidden sm:inline text-slate-700">|</span>
-                <span><i class="fa-solid fa-phone text-slate-500 mr-1"></i>Tel: <b class="text-slate-300">+54 9 388 4087128</b></span>
-                <span class="hidden sm:inline text-slate-700">|</span>
-                <span class="text-blue-400 font-semibold">Exclusivo EJESA &copy; 2026 - V1.0</span>
+                <span>Tel: <b class="text-slate-300">+54 9 388 4087128</b></span>
             </div>
         </div>
     </footer>
 
     <!-- MODAL DE EXCEPCIÓN HORARIA -->
     <div id="modalExcepcion" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border-2 border-rose-600 rounded-2xl max-w-sm sm:max-w-md w-full p-6 shadow-2xl text-center space-y-4 mx-auto">
+        <div class="bg-slate-800 border-2 border-rose-600 rounded-2xl max-w-sm w-full p-6 text-center space-y-4">
             <div class="text-4xl text-rose-500">⚠️</div>
-            <h3 class="text-lg sm:text-xl font-bold text-white">¿Está seguro que desea agregar el consumo fuera de horario?</h3>
-            <p id="txtModalMensaje" class="text-xs sm:text-sm text-slate-300">Se registrará una excepción de horario bajo el usuario Cocina.</p>
+            <h3 class="text-lg sm:text-xl font-bold text-white">¿Autorizar fuera de horario?</h3>
+            <p id="txtModalMensaje" class="text-xs text-slate-300">Se registrará una excepción.</p>
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                <button onclick="cerrarModalExcepcion(false)" class="w-full flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">Cancelar</button>
-                <button onclick="cerrarModalExcepcion(true)" class="w-full flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-rose-950/30">Sí, autorizar</button>
+                <button onclick="cerrarModalExcepcion(false)" class="w-full flex-1 bg-slate-700 text-white font-bold py-3 rounded-xl transition">Cancelar</button>
+                <button onclick="cerrarModalExcepcion(true)" class="w-full flex-1 bg-rose-600 text-white font-bold py-3 rounded-xl transition">Autorizar</button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT DE SUPABASE Y LÓGICA DE LA PWA -->
+    <!-- MODAL DE OLVIDO (VALIDACIÓN PENDIENTE) -->
+    <div id="modalOlvido" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border-2 border-rose-600 rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-rose-900/50 pb-3">
+                <h3 class="text-lg font-bold text-rose-400">Carga Excepcional</h3>
+                <button onclick="cerrarModalOlvido()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Fecha Olvidada</label>
+                    <input type="date" id="olvido-fecha" class="w-full px-3 py-2 bg-slate-900 border border-rose-900/50 rounded-xl text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Comida</label>
+                    <select id="olvido-comida" class="w-full px-3 py-2 bg-slate-900 border border-rose-900/50 rounded-xl text-white outline-none">
+                        <option value="Desayuno">Desayuno</option>
+                        <option value="Almuerzo">Almuerzo</option>
+                        <option value="Cena">Cena</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Empleado</label>
+                    <select id="olvido-empleado" class="w-full px-3 py-2 bg-slate-900 border border-rose-900/50 rounded-xl text-white outline-none"></select>
+                </div>
+            </div>
+            <button onclick="enviarOlvidoPendiente()" class="w-full bg-rose-700 text-white font-bold py-3 rounded-xl mt-4">Enviar a Administración</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE ESTADÍSTICAS Y AUDITORÍA DE COCINA -->
+    <div id="modalHistorialCocina" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-chart-line text-blue-400"></i> Auditoría de Cocina</h3>
+                <button onclick="cerrarModalHistorialCocina()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="overflow-y-auto space-y-4 pr-1 flex-1">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Tendencia (Últimos 7 Días)</h4>
+                    <div id="tendencia-semana" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-2">
+                        <label class="text-xs font-medium text-slate-300">Auditoría Diaria:</label>
+                        <input type="date" id="historial-fecha" onchange="cargarHistorialCocinaFecha()" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none">
+                    </div>
+                    <div class="border border-slate-700 rounded-xl overflow-hidden bg-slate-900">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-950 text-slate-400 border-b border-slate-700">
+                                <tr><th class="p-2.5">Personal</th><th class="p-2.5 text-center">Desayuno</th><th class="p-2.5 text-center">Almuerzo</th><th class="p-2.5 text-center">Cena</th></tr>
+                            </thead>
+                            <tbody id="tabla-historial-cocina" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <button onclick="cerrarModalHistorialCocina()" class="w-full bg-slate-700 text-white font-bold py-2.5 rounded-xl">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL: SUPABASE Y PWA -->
     <script>
-        // CONFIGURACIÓN DE SUPABASE
+        // Inicialización de Supabase con el objeto 'window.supabase' garantizado por el CDN UMD
         const SUPABASE_URL = 'https://wdbqhqykqogwalesqpp.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_o23qFllIDQ4SfFanUftyTQ_Zh_py4yK';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -202,36 +252,15 @@
         let callbackExcepcionPendiente = null;
         let idleTimer; 
 
-        function toggleMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('hidden');
-            menu.classList.toggle('flex');
-        }
-
-        function closeMenuIfClickOutside() {
-            const menu = document.getElementById('mobileMenu');
-            if (!menu.classList.contains('hidden')) {
-                menu.classList.add('hidden');
-                menu.classList.remove('flex');
-            }
-        }
-
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.error("Error fullscreen:", err));
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
-        }
-
-        function abrirPortalAdmin() {
-            window.open('./admin.html', '_self');
-        }
+        // NAVEGACIÓN Y MENÚS
+        function abrirPortalAdmin() { window.open('./admin.html', '_self'); }
+        function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); document.getElementById('mobileMenu').classList.toggle('flex'); }
+        function closeMenuIfClickOutside() { const menu = document.getElementById('mobileMenu'); if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); menu.classList.remove('flex'); } }
+        function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); } else { if (document.exitFullscreen) document.exitFullscreen(); } }
 
         window.onload = function() {
             const u = localStorage.getItem('shira_user'), r = localStorage.getItem('shira_role');
-            if (u && r) { currentUser = u; currentRole = r; mostrarVistaApp(); }
-            else { mostrarVistaLogin(); }
+            if (u && r) { currentUser = u; currentRole = r; mostrarVistaApp(); } else { mostrarVistaLogin(); }
             
             verificarConexionOffline();
             window.addEventListener('online', verificarConexionOffline);
@@ -239,188 +268,110 @@
 
             const resetTimerEvents = ['click', 'touchstart', 'mousemove', 'keypress'];
             resetTimerEvents.forEach(evt => document.body.addEventListener(evt, resetIdleTimer, {passive: true}));
-            resetIdleTimer(); 
+            resetIdleTimer();
+            
+            // Registro PWA
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.error);
         };
 
         function resetIdleTimer() {
             clearTimeout(idleTimer);
             idleTimer = setTimeout(() => {
-                if (currentUser) {
-                    autoSeleccionarComida(); 
-                    document.getElementById('inputPinPersonal').value = '';
-                    document.getElementById('selectVisita').value = '';
-                    cambiarTab('personal'); 
-                }
+                if (currentUser) { autoSeleccionarComida(); document.getElementById('inputPinPersonal').value = ''; cambiarTab('personal'); }
             }, 300000); 
-        }
-
-        function playSuccessSound() {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-                const ctx = new AudioContext();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                osc.frequency.setValueAtTime(1108.73, ctx.currentTime + 0.1); 
-                gain.gain.setValueAtTime(0, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.03);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
-                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.13);
-                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + 0.3);
-            } catch(e) { }
         }
 
         function verificarConexionOffline() {
             const badge = document.getElementById('headerConnectionStatus');
             const dot = badge.querySelector('.status-dot');
             const text = badge.querySelector('.status-text');
-            
             if(currentUser) badge.classList.remove('hidden');
             if (!navigator.onLine) {
-                badge.className = "hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[10px] sm:text-xs font-semibold";
-                dot.className = "status-dot relative inline-flex rounded-full h-2 w-2 bg-blue-500";
-                dot.innerHTML = ""; 
+                badge.className = "hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[10px] font-semibold";
+                dot.className = "status-dot relative inline-flex rounded-full h-2 w-2 bg-blue-500"; dot.innerHTML = ""; 
                 text.innerText = "Modo Offline";
             } else {
-                badge.className = "hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-semibold";
+                badge.className = "hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold";
                 dot.className = "status-dot relative flex h-2 w-2";
                 dot.innerHTML = `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>`;
                 text.innerText = "Supabase Conectado";
             }
-            if(currentUser) badge.classList.remove('hidden'); 
         }
 
-        // LOGIN DIRECTO EN SUPABASE (¡Ultra rápido!)
+        function playSuccessSound() {
+            try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime); osc.start(); gain.gain.setValueAtTime(0.3, ctx.currentTime); osc.stop(ctx.currentTime + 0.1); } catch(e) {}
+        }
+
+        // LOGIN Y VISTAS
         async function handleLogin(e) {
             e.preventDefault();
             const u = document.getElementById('loginUser').value.trim();
             const p = document.getElementById('loginPass').value.trim();
             const btn = document.getElementById('btnLogin');
             const err = document.getElementById('loginError');
-            btn.innerText = 'Verificando...'; err.classList.add('hidden');
+            btn.innerText = 'Verificando en Supabase...'; err.classList.add('hidden');
 
             try {
-                const { data, error } = await supabase
-                    .from('Credenciales')
-                    .select('*')
-                    .eq('usuario', u)
-                    .eq('password', p)
-                    .single();
-
+                const { data, error } = await supabase.from('Credenciales').select('*').eq('usuario', u).eq('password', p).single();
                 btn.innerText = 'Ingresar al Sistema';
-                if (error || !data) {
-                    err.innerText = 'Usuario o contraseña incorrectos.';
-                    err.classList.remove('hidden');
-                } else {
-                    currentUser = data.descripcion || data.usuario;
-                    currentRole = data.rol;
-                    localStorage.setItem('shira_user', currentUser);
-                    localStorage.setItem('shira_role', currentRole);
-                    mostrarVistaApp();
-                    toggleFullScreen();
+                if (error || !data) { err.innerText = 'Usuario o contraseña incorrectos.'; err.classList.remove('hidden'); } 
+                else {
+                    currentUser = data.descripcion || data.usuario; currentRole = data.rol;
+                    localStorage.setItem('shira_user', currentUser); localStorage.setItem('shira_role', currentRole);
+                    mostrarVistaApp(); toggleFullScreen();
                 }
             } catch (errNet) {
-                btn.innerText = 'Ingresar al Sistema';
-                err.innerText = 'Error de conexión con Supabase.';
-                err.classList.remove('hidden');
+                btn.innerText = 'Ingresar al Sistema'; err.innerText = 'Error de conexión de red.'; err.classList.remove('hidden');
             }
         }
 
-        function cerrarSesion() {
-            localStorage.clear(); currentUser = null; currentRole = null; 
-            closeMenuIfClickOutside();
-            mostrarVistaLogin();
-        }
-
-        function mostrarVistaLogin() {
-            document.getElementById('viewLogin').classList.remove('hidden');
-            document.getElementById('viewApp').classList.add('hidden');
-            document.getElementById('userInfoHeader').classList.add('hidden');
-            document.getElementById('userInfoHeader').classList.remove('flex');
-            document.getElementById('btnSync').classList.add('hidden');
-            document.getElementById('headerConnectionStatus').classList.add('hidden');
-            document.getElementById('menuHamburgerBtn').classList.add('hidden');
-            document.getElementById('menuBtnOlvido').classList.add('hidden');
-            document.getElementById('menuBtnHistorial').classList.add('hidden');
-        }
-
+        function cerrarSesion() { localStorage.clear(); currentUser = null; currentRole = null; closeMenuIfClickOutside(); mostrarVistaLogin(); }
+        function mostrarVistaLogin() { document.getElementById('viewLogin').classList.remove('hidden'); document.getElementById('viewApp').classList.add('hidden'); document.getElementById('userInfoHeader').classList.add('hidden'); document.getElementById('btnSync').classList.add('hidden'); document.getElementById('headerConnectionStatus').classList.add('hidden'); document.getElementById('menuHamburgerBtn').classList.add('hidden'); }
+        
         function mostrarVistaApp() {
-            document.getElementById('viewLogin').classList.add('hidden');
-            document.getElementById('viewApp').classList.remove('hidden');
-            document.getElementById('userInfoHeader').classList.remove('hidden');
-            document.getElementById('userInfoHeader').classList.add('flex');
-            document.getElementById('btnSync').classList.remove('hidden');
-            document.getElementById('headerConnectionStatus').classList.remove('hidden');
-            document.getElementById('menuHamburgerBtn').classList.remove('hidden');
+            document.getElementById('viewLogin').classList.add('hidden'); document.getElementById('viewApp').classList.remove('hidden'); document.getElementById('userInfoHeader').classList.remove('hidden'); document.getElementById('userInfoHeader').classList.add('flex'); document.getElementById('btnSync').classList.remove('hidden'); document.getElementById('headerConnectionStatus').classList.remove('hidden'); document.getElementById('menuHamburgerBtn').classList.remove('hidden');
             document.getElementById('txtUserRole').innerText = `${currentUser} (${currentRole.toUpperCase()})`;
             
-            const btnOlvido = document.getElementById('menuBtnOlvido');
-            const btnHistorial = document.getElementById('menuBtnHistorial');
-            const tabPersonal = document.getElementById('tabPersonal');
-            const tabVisitas = document.getElementById('tabVisitas');
-            const btnRegPersonal = document.getElementById('btnRegistrarPersonal');
-            const btnRegVisitas = document.getElementById('btnRegistrarVisita');
-            
             if(currentRole === 'cocina') {
-                btnOlvido.classList.remove('hidden');
-                btnHistorial.classList.remove('hidden');
-                tabPersonal.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-rose-900 text-white border-2 border-rose-700";
-                tabVisitas.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
-                btnRegPersonal.className = "w-full sm:w-auto bg-rose-800 hover:bg-rose-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition";
-                btnRegVisitas.className = "w-full bg-rose-800 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-lg transition";
+                document.getElementById('menuBtnOlvido').classList.remove('hidden'); document.getElementById('menuBtnHistorial').classList.remove('hidden');
+                document.getElementById('tabPersonal').className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-rose-900 text-white border-2 border-rose-700";
+                document.getElementById('btnRegistrarPersonal').className = "w-full sm:w-auto bg-rose-800 hover:bg-rose-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition";
             } else {
-                btnOlvido.classList.add('hidden');
-                btnHistorial.classList.add('hidden');
-                tabPersonal.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-blue-600 text-white border-2 border-blue-500";
-                tabVisitas.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
-                btnRegPersonal.className = "w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition";
-                btnRegVisitas.className = "w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg transition";
+                document.getElementById('menuBtnOlvido').classList.add('hidden'); document.getElementById('menuBtnHistorial').classList.add('hidden');
+                document.getElementById('tabPersonal').className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-blue-600 text-white border-2 border-blue-500";
+                document.getElementById('btnRegistrarPersonal').className = "w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition";
             }
-
-            cargarDatosBase();
-            verificarConexionOffline();
+            cargarDatosBase(); verificarConexionOffline();
         }
 
-        // CARGAR DATOS DIRECTAMENTE DE SUPABASE
+        // CARGA DE DATOS DESDE SUPABASE
         async function cargarDatosBase() {
+            if(!navigator.onLine) { mostrarFeedback('Modo offline: usando caché.', true); poblarSelectores(); return; }
             try {
-                const { data: personalData } = await supabase.from('Personal').select('*');
-                const { data: visitasData } = await supabase.from('VisitasAutorizadas').select('*').eq('estado', 'Habilitado');
-
-                datosLocales.personal = personalData || [];
-                datosLocales.visitas = visitasData || [];
-                
-                poblarSelectores();
-                autoSeleccionarComida();
-                mostrarFeedback('¡Sincronizado con Supabase!', true);
+                const { data: pData } = await supabase.from('Personal').select('*').eq('estado', 'Habilitado');
+                const { data: vData } = await supabase.from('VisitasAutorizadas').select('*').eq('estado', 'Habilitado');
+                datosLocales.personal = pData || []; datosLocales.visitas = vData || [];
+                localStorage.setItem('shira_cache', JSON.stringify(datosLocales));
+                poblarSelectores(); autoSeleccionarComida(); mostrarFeedback('Base sincronizada (Supabase).', true);
             } catch (e) {
-                console.error('Error sincronizando:', e);
+                const c = localStorage.getItem('shira_cache'); if (c) { datosLocales = JSON.parse(c); poblarSelectores(); autoSeleccionarComida(); }
             }
         }
 
         function poblarSelectores() {
-            const selVis = document.getElementById('selectVisita');
-            selVis.innerHTML = '<option value="">-- Seleccione una visita --</option>';
-            datosLocales.visitas.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.nombre; opt.textContent = `${v.nombre} (${v.empresa})`;
-                selVis.appendChild(opt);
-            });
+            const selVis = document.getElementById('selectVisita'); selVis.innerHTML = '<option value="">-- Seleccione una visita --</option>';
+            datosLocales.visitas.forEach(v => { const opt = document.createElement('option'); opt.value = v.nombre; opt.textContent = `${v.nombre} (${v.empresa})`; selVis.appendChild(opt); });
+            const selOlvido = document.getElementById('olvido-empleado'); if(selOlvido) {
+                selOlvido.innerHTML = '<option value="">-- Seleccione empleado --</option>';
+                [...datosLocales.personal].sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(p => {
+                    const opt = document.createElement('option'); opt.value = p.dni; opt.textContent = `${p.nombre} (${p.empresa})`; selOlvido.appendChild(opt);
+                });
+            }
         }
 
+        // CONTROL DE INTERFAZ APP
         function autoSeleccionarComida() {
-            const h = new Date().getHours() + (new Date().getMinutes() / 60);
-            let sug = 'Almuerzo';
-            if (h >= 5 && h < 11) sug = 'Desayuno';
-            else if (h >= 11 && h < 17) sug = 'Almuerzo';
-            else if (h >= 17 && h < 23) sug = 'Cena';
-            else sug = 'Desayuno';
+            const h = new Date().getHours(); let sug = (h >= 5 && h < 11) ? 'Desayuno' : (h >= 11 && h < 17) ? 'Almuerzo' : (h >= 17 && h < 23) ? 'Cena' : 'Desayuno';
             seleccionarComida(sug, true);
         }
 
@@ -428,151 +379,115 @@
             comidaSeleccionada = tipo;
             ['Desayuno', 'Almuerzo', 'Cena'].forEach(c => {
                 const btn = document.getElementById('btn' + c);
-                if (c === tipo) {
-                    btn.className = currentRole === 'cocina' ? 
-                        "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-rose-600 bg-rose-900/50 text-white shadow-lg transition scale-105" :
-                        "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-blue-500 bg-blue-600/30 text-white shadow-lg transition scale-105";
-                } else {
-                    btn.className = "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-700 transition";
-                }
+                if (c === tipo) btn.className = currentRole === 'cocina' ? "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-rose-600 bg-rose-900/50 text-white shadow-lg scale-105" : "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-blue-500 bg-blue-600/30 text-white shadow-lg scale-105";
+                else btn.className = "comida-btn flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border-2 border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-700";
             });
             document.getElementById('autoTimeNotice').innerText = auto ? '🕒 Autoseleccionado' : '👆 Selección manual';
         }
 
         function cambiarTab(tab) {
-            const tP = document.getElementById('tabPersonal');
-            const tV = document.getElementById('tabVisitas');
             const isCocina = currentRole === 'cocina';
-
             if (tab === 'personal') {
-                document.getElementById('panelPersonal').classList.remove('hidden');
-                document.getElementById('panelVisitas').classList.add('hidden');
-                tP.className = isCocina ? "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-rose-900 text-white border-2 border-rose-700" : "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-blue-600 text-white border-2 border-blue-500";
-                tV.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
+                document.getElementById('panelPersonal').classList.remove('hidden'); document.getElementById('panelVisitas').classList.add('hidden');
+                document.getElementById('tabPersonal').className = isCocina ? "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-rose-900 text-white border-2 border-rose-700" : "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-blue-600 text-white border-2 border-blue-500";
+                document.getElementById('tabVisitas').className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
             } else {
-                document.getElementById('panelPersonal').classList.add('hidden');
-                document.getElementById('panelVisitas').classList.remove('hidden');
-                tV.className = isCocina ? "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-rose-900 text-white border-2 border-rose-700" : "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-blue-600 text-white border-2 border-blue-500";
-                tP.className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
+                document.getElementById('panelPersonal').classList.add('hidden'); document.getElementById('panelVisitas').classList.remove('hidden');
+                document.getElementById('tabVisitas').className = isCocina ? "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-rose-900 text-white border-2 border-rose-700" : "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-blue-600 text-white border-2 border-blue-500";
+                document.getElementById('tabPersonal').className = "w-full py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-md bg-slate-800 text-slate-400 border-2 border-slate-700 hover:text-white";
             }
         }
 
         function validarHorario(comida) {
             if (currentRole === 'cocina') return true;
-            const h = new Date().getHours() + (new Date().getMinutes() / 60);
-            if (comida === 'Desayuno' && (h >= 5 && h <= 11)) return true;
-            if (comida === 'Almuerzo' && (h >= 11 && h <= 17)) return true;
-            if (comida === 'Cena' && (h >= 17 && h <= 23)) return true;
+            const h = new Date().getHours();
+            if (comida === 'Desayuno' && h >= 5 && h < 11) return true;
+            if (comida === 'Almuerzo' && h >= 11 && h < 17) return true;
+            if (comida === 'Cena' && h >= 17 && h < 23) return true;
             return false;
         }
 
+        // PROCESAMIENTO Y ESCRITURA EN SUPABASE
         function procesarFichajePersonal() {
-            const pin = document.getElementById('inputPinPersonal').value.trim();
-            if (!pin) { mostrarFeedback('Ingrese un PIN o DNI.', false); return; }
-            
+            const pin = document.getElementById('inputPinPersonal').value.trim(); if (!pin) return;
             const emp = datosLocales.personal.find(p => p.dni === pin);
-            if (!emp) { mostrarFeedback('PIN o DNI no encontrado en la base.', false); return; }
-
-            if (emp.estado !== 'Habilitado') { 
-                mostrarFeedback(`Acceso denegado: ${emp.nombre} está INHABILITADO.`, false); 
-                return; 
-            }
-
+            if (!emp) { mostrarFeedback('PIN no encontrado.', false); return; }
             const enH = validarHorario(comidaSeleccionada);
-            if (!enH && currentRole === 'comedor') {
-                mostrarFeedback(`Horario cerrado en Comedor. Diríjase a Cocina.`, false);
-                return;
-            }
-            if (!enH && currentRole === 'cocina') {
-                document.getElementById('txtModalMensaje').innerText = `Registrando ${comidaSeleccionada} fuera de horario para ${emp.nombre}.`;
-                document.getElementById('modalExcepcion').classList.remove('hidden');
-                callbackExcepcionPendiente = (aut) => { if (aut) ejecutarGuardado(emp.dni, emp.nombre, 'Personal', emp.empresa, 'Excepción Horaria'); };
-                return;
-            }
+            if (!enH && currentRole === 'comedor') { mostrarFeedback(`Horario cerrado.`, false); return; }
+            if (!enH && currentRole === 'cocina') { document.getElementById('modalExcepcion').classList.remove('hidden'); callbackExcepcionPendiente = (aut) => { if (aut) ejecutarGuardado(emp.dni, emp.nombre, 'Personal', emp.empresa, 'Excepción Horaria'); }; return; }
             ejecutarGuardado(emp.dni, emp.nombre, 'Personal', emp.empresa, 'Normal');
         }
 
         function procesarFichajeVisita() {
-            const vNombre = document.getElementById('selectVisita').value;
-            if (!vNombre) { mostrarFeedback('Seleccione una visita.', false); return; }
-
-            const visitaObj = datosLocales.visitas.find(v => v.nombre === vNombre);
-            const empresaVisita = visitaObj ? visitaObj.empresa : 'Externa';
-
+            const vNombre = document.getElementById('selectVisita').value; if (!vNombre) return;
+            const visitaObj = datosLocales.visitas.find(v => v.nombre === vNombre); const empV = visitaObj ? visitaObj.empresa : 'Externa';
             const enH = validarHorario(comidaSeleccionada);
-            if (!enH && currentRole === 'comedor') {
-                mostrarFeedback(`Horario cerrado en Comedor. Diríjase a Cocina.`, false);
-                return;
-            }
-            if (!enH && currentRole === 'cocina') {
-                document.getElementById('txtModalMensaje').innerText = `Registrando ${comidaSeleccionada} fuera de horario para ${vNombre}.`;
-                document.getElementById('modalExcepcion').classList.remove('hidden');
-                callbackExcepcionPendiente = (aut) => { if (aut) ejecutarGuardado('Habilitado', vNombre, 'Visita', empresaVisita, 'Excepción Horaria'); };
-                return;
-            }
-            ejecutarGuardado('Habilitado', vNombre, 'Visita', empresaVisita, 'Normal');
+            if (!enH && currentRole === 'comedor') { mostrarFeedback(`Horario cerrado.`, false); return; }
+            if (!enH && currentRole === 'cocina') { document.getElementById('modalExcepcion').classList.remove('hidden'); callbackExcepcionPendiente = (aut) => { if (aut) ejecutarGuardado('ID-V', vNombre, 'Visita', empV, 'Excepción Horaria'); }; return; }
+            ejecutarGuardado('ID-V', vNombre, 'Visita', empV, 'Normal');
         }
 
-        function cerrarModalExcepcion(aut) {
-            document.getElementById('modalExcepcion').classList.add('hidden');
-            if (callbackExcepcionPendiente) callbackExcepcionPendiente(aut);
-            callbackExcepcionPendiente = null;
-        }
+        function cerrarModalExcepcion(aut) { document.getElementById('modalExcepcion').classList.add('hidden'); if (callbackExcepcionPendiente) callbackExcepcionPendiente(aut); callbackExcepcionPendiente = null; }
 
-        // GUARDAR EN SUPABASE EN TIEMPO REAL (Milisegundos)
         async function ejecutarGuardado(id, nom, tipoP, empresa, modoReg) {
-            const hoy = new Date().toISOString().split('T')[0];
-            const hora = new Date().toTimeString().split(' ')[0];
-
+            const hoy = new Date().toLocaleDateString('en-CA'); const hora = new Date().toTimeString().split(' ')[0];
             try {
-                // Verificar duplicado en el día
-                const { data: existente } = await supabase
-                    .from('RegistrosConsumo')
-                    .select('*')
-                    .eq('fecha', hoy)
-                    .eq('nombre', nom)
-                    .eq('tipo_comida', comidaSeleccionada);
-
-                if (existente && existente.length > 0) {
-                    mostrarFeedback(`⚠️ Atención: ${nom} ya registró su ${comidaSeleccionada} hoy.`, false);
-                    return;
+                if(navigator.onLine) {
+                    const { data: existente } = await supabase.from('RegistrosConsumo').select('id').eq('fecha', hoy).eq('nombre', nom).eq('tipo_comida', comidaSeleccionada);
+                    if (existente && existente.length > 0) { mostrarFeedback(`⚠️ ${nom} ya registró ${comidaSeleccionada} hoy.`, false); return; }
+                    const { error } = await supabase.from('RegistrosConsumo').insert([{ fecha: hoy, hora: hora, tipo_comida: comidaSeleccionada, tipo_persona: tipoP, identificacion: id, nombre: nom, empresa: empresa, modo_registro: modoReg, usuario_tablet: currentUser }]);
+                    if (error) throw error;
                 }
-
-                // Insertar consumo
-                const { error } = await supabase.from('RegistrosConsumo').insert([
-                    {
-                        fecha: hoy,
-                        hora: hora,
-                        tipo_comida: comidaSeleccionada,
-                        tipo_persona: tipoP,
-                        identificacion: id,
-                        nombre: nom,
-                        empresa: empresa,
-                        modo_registro: modoReg,
-                        usuario_tablet: currentUser
-                    }
-                ]);
-
-                if (error) throw error;
-
-                mostrarFeedback(`¡Consumo registrado con éxito para ${nom}!`, true);
-                document.getElementById('inputPinPersonal').value = ''; 
-                document.getElementById('selectVisita').value = '';
-            } catch (err) {
-                mostrarFeedback(`Error al registrar: ${err.message}`, false);
-            }
+                mostrarFeedback(`¡Éxito! Consumo de ${nom}.`, true);
+                document.getElementById('inputPinPersonal').value = ''; document.getElementById('selectVisita').value = '';
+            } catch (err) { mostrarFeedback(`Error BD: ${err.message}`, false); }
         }
 
         function mostrarFeedback(msg, ex) {
-            const box = document.getElementById('feedbackBox');
-            box.classList.remove('hidden'); box.innerText = msg;
-            if (ex) {
-                playSuccessSound(); 
-                box.className = "mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl text-center font-bold text-sm sm:text-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300";
-            } else {
-                box.className = "mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl text-center font-bold text-sm sm:text-lg bg-red-500/20 border border-red-500/50 text-red-300";
+            const box = document.getElementById('feedbackBox'); box.classList.remove('hidden'); box.innerText = msg;
+            if (ex) { playSuccessSound(); box.className = "mt-4 p-4 rounded-xl text-center font-bold text-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"; } 
+            else { box.className = "mt-4 p-4 rounded-xl text-center font-bold text-lg bg-red-500/20 border border-red-500/50 text-red-300"; }
+            setTimeout(() => box.classList.add('hidden'), 3500);
+        }
+
+        // FUNCIONES EXCLUSIVAS DE COCINA (OLVIDO Y ESTADISTICAS)
+        function abrirModalOlvido() { toggleMenu(); document.getElementById('modalOlvido').classList.remove('hidden'); document.getElementById('modalOlvido').classList.add('flex'); document.getElementById('olvido-fecha').value = new Date().toLocaleDateString('en-CA'); }
+        function cerrarModalOlvido() { document.getElementById('modalOlvido').classList.add('hidden'); document.getElementById('modalOlvido').classList.remove('flex'); }
+
+        async function enviarOlvidoPendiente() {
+            const fCons = document.getElementById('olvido-fecha').value, tCom = document.getElementById('olvido-comida').value, dniEmp = document.getElementById('olvido-empleado').value;
+            if(!fCons || !dniEmp) return alert("Complete los datos.");
+            const empObj = datosLocales.personal.find(p => p.dni === dniEmp);
+            const idUnico = "PEND-" + Date.now(); const hoy = new Date().toLocaleDateString('en-CA'); const hora = new Date().toTimeString().split(' ')[0];
+            const { error } = await supabase.from('ValidacionesPendientes').insert([{ id: idUnico, fecha_solicitud: hoy, hora_solicitud: hora, fecha_consumo: fCons, tipo_comida: tCom, tipo_persona: 'Personal', identificacion: empObj.dni, nombre: empObj.nombre, empresa: empObj.empresa, estado: 'Pendiente', aprobado_por: '' }]);
+            if(error) alert("Error: " + error.message); else { alert("Solicitud enviada."); cerrarModalOlvido(); }
+        }
+
+        function abrirModalHistorialCocina() { toggleMenu(); document.getElementById('modalHistorialCocina').classList.remove('hidden'); document.getElementById('modalHistorialCocina').classList.add('flex'); document.getElementById('historial-fecha').value = new Date().toLocaleDateString('en-CA'); cargarHistorialCocinaFecha(); cargarTendenciaSemana(); }
+        function cerrarModalHistorialCocina() { document.getElementById('modalHistorialCocina').classList.add('hidden'); document.getElementById('modalHistorialCocina').classList.remove('flex'); }
+
+        async function cargarTendenciaSemana() {
+            const contenedor = document.getElementById('tendencia-semana'); contenedor.innerHTML = 'Cargando...';
+            const hoy = new Date(); const h7 = new Date(hoy); h7.setDate(hoy.getDate()-6);
+            const { data, error } = await supabase.from('RegistrosConsumo').select('fecha, tipo_comida').gte('fecha', h7.toLocaleDateString('en-CA'));
+            if(error) return; contenedor.innerHTML = '';
+            for(let d=6; d>=0; d--) {
+                const fRef = new Date(hoy); fRef.setDate(hoy.getDate()-d); const fStr = fRef.toLocaleDateString('en-CA');
+                let cD=0, cA=0, cC=0; data.forEach(r => { if(r.fecha === fStr){ if(r.tipo_comida==='Desayuno') cD++; if(r.tipo_comida==='Almuerzo') cA++; if(r.tipo_comida==='Cena') cC++; } });
+                contenedor.innerHTML += `<div class="bg-slate-800 p-2 rounded-lg border border-slate-700 flex flex-col justify-between"><div class="text-[10px] text-slate-400 font-bold">${['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][fRef.getDay()]}</div><div class="space-y-0.5 text-xs"><div class="text-blue-300">☕ ${cD}</div><div class="text-cyan-300">🍽️ ${cA}</div><div class="text-purple-300">🌙 ${cC}</div></div></div>`;
             }
-            setTimeout(() => box.classList.add('hidden'), 4000);
+        }
+
+        async function cargarHistorialCocinaFecha() {
+            const fecha = document.getElementById('historial-fecha').value, tbody = document.getElementById('tabla-historial-cocina');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Consultando BD...</td></tr>`;
+            const { data: consumos } = await supabase.from('RegistrosConsumo').select('identificacion, nombre, tipo_comida').eq('fecha', fecha);
+            tbody.innerHTML = '';
+            datosLocales.personal.forEach(emp => {
+                let d=false, a=false, c=false;
+                (consumos || []).forEach(item => { if (item.identificacion === emp.dni || item.nombre.toLowerCase() === emp.nombre.toLowerCase()) { if(item.tipo_comida==='Desayuno') d=true; if(item.tipo_comida==='Almuerzo') a=true; if(item.tipo_comida==='Cena') c=true; } });
+                tbody.innerHTML += `<tr class="border-b border-slate-700/50"><td class="p-2.5 text-white">${emp.nombre}<br><span class="text-[10px] text-slate-400">${emp.empresa}</span></td><td class="text-center">${d?'✔':'-'}</td><td class="text-center">${a?'✔':'-'}</td><td class="text-center">${c?'✔':'-'}</td></tr>`;
+            });
         }
     </script>
 </body>
