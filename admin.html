@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Servicio Catering - Admin</title>
+    <title>Servicio Catering - Admin (v2.1)</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0047AB">
@@ -152,38 +152,54 @@
             document.getElementById('rep-end').value = new Date().toLocaleDateString('en-CA');
         };
 
+        // LOGIN REESCRITO A PRUEBA DE FALLOS Y FLEXIBLE
         async function handleLogin(e) {
             e.preventDefault(); 
-            const u = document.getElementById('adminUser').value.trim(); 
-            const p = document.getElementById('adminPass').value.trim();
+            const uInput = document.getElementById('adminUser').value.trim(); 
+            const pInput = document.getElementById('adminPass').value.trim();
             const err = document.getElementById('loginError');
+            const btn = document.getElementById('btnLogin');
+            
             err.classList.add('hidden');
+            btn.innerText = 'Verificando...';
 
             try {
-                const { data, error } = await db
-                    .from('Credenciales')
-                    .select('*')
-                    .eq('usuario', u)
-                    .eq('password', p)
-                    .single();
+                // Traemos todos los registros de credenciales para evaluarlos con seguridad en JS
+                const { data, error } = await db.from('Credenciales').select('*');
+
+                btn.innerText = 'Ingresar';
 
                 if (error || !data) {
+                    err.innerText = 'Error de comunicación con Supabase.';
+                    err.classList.remove('hidden');
+                    return;
+                }
+
+                // Buscamos coincidencia flexible (ignorando mayúsculas/minúsculas en el usuario)
+                const usuarioEncontrado = data.find(item => 
+                    item.usuario.trim().toLowerCase() === uInput.toLowerCase() && 
+                    String(item.password).trim() === pInput
+                );
+
+                if (!usuarioEncontrado) {
                     err.innerText = 'Usuario o contraseña incorrectos.';
                     err.classList.remove('hidden');
                 } else {
-                    const rolUsuario = (data.rol || '').toLowerCase();
+                    const rol = (usuarioEncontrado.rol || '').trim().toLowerCase();
                     
-                    if (rolUsuario === 'admin' || rolUsuario === 'cocina') {
-                        adminUser = data.descripcion || data.usuario;
+                    // Permitimos acceso si es admin o cocina
+                    if (rol === 'admin' || rol === 'cocina') {
+                        adminUser = usuarioEncontrado.descripcion || usuarioEncontrado.usuario;
                         sessionStorage.setItem('admin_user', adminUser);
                         showDashboard();
                     } else {
-                        err.innerText = 'Acceso denegado: este usuario no tiene permisos de administración.';
+                        err.innerText = 'Acceso denegado: rol sin privilegios.';
                         err.classList.remove('hidden');
                     }
                 }
             } catch (errNet) {
-                err.innerText = 'Error de conexión con la base de datos.';
+                btn.innerText = 'Ingresar';
+                err.innerText = 'Excepción de red al iniciar sesión.';
                 err.classList.remove('hidden');
             }
         }
