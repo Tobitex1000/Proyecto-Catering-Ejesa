@@ -106,3 +106,132 @@
                 <!-- VISTA REPORTES -->
                 <div id="view-reportes" class="space-y-6 hidden">
                     <div class="flex gap-4 bg-white p-4 rounded-xl border">
+                        <input type="date" id="rep-start" class="border p-2 rounded">
+                        <input type="date" id="rep-end" class="border p-2 rounded">
+                        <button onclick="generateReport()" class="bg-emerald-600 text-white px-6 rounded-lg font-bold">Generar</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Total</p><p class="text-3xl font-black" id="rep-kpi-total">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Personal</p><p class="text-3xl font-black text-blue-600" id="rep-kpi-pers">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Visitas</p><p class="text-3xl font-black text-purple-600" id="rep-kpi-vis">0</p></div>
+                        <div class="bg-white p-4 rounded-xl border text-center"><p class="text-xs text-slate-500 uppercase">Excepciones</p><p class="text-3xl font-black text-rose-600" id="rep-kpi-exc">0</p></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl border">
+                        <h3 class="font-bold mb-4">Consumos Totales por Empresa</h3>
+                        <table class="w-full text-left"><thead class="bg-slate-50 border-b"><tr><th class="p-3">Empresa</th><th class="p-3">Total Consumido</th></tr></thead><tbody id="rep-body-empresa" class="text-sm divide-y"></tbody></table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR PERSONAL -->
+    <div id="modal-add" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold">Guardar Personal (Supabase)</h3>
+            <form onsubmit="saveEmployee(event)" class="space-y-4">
+                <div class="flex gap-4"><input type="text" id="emp-name" placeholder="Nombre Completo" required class="w-full border p-2 rounded"><input type="text" id="emp-pin" placeholder="PIN/DNI" required class="w-full border p-2 rounded"></div>
+                <div class="flex gap-4"><input type="text" id="emp-comp" placeholder="Empresa" required class="w-full border p-2 rounded"><select id="emp-stat" class="w-full border p-2 rounded"><option value="Habilitado">Habilitado</option><option value="Deshabilitado">Inactivo</option></select></div>
+                <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="document.getElementById('modal-add').classList.add('hidden')" class="px-4 py-2 bg-slate-200 rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold">Guardar BD</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wdbqhqykqogwalesqpp.supabase.co';
+        const SUPABASE_KEY = 'PEGA_AQUI_TU_CLAVE_ANON_QUE_EMPIEZA_CON_eyJ'; // <--- Tu clave heredada eyJ...
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let adminUser = null;
+
+        window.onload = function() {
+            const u = sessionStorage.getItem('admin_user'); if (u) { adminUser = u; showDashboard(); }
+            document.getElementById('rep-start').value = new Date().toLocaleDateString('en-CA');
+            document.getElementById('rep-end').value = new Date().toLocaleDateString('en-CA');
+        };
+
+        async function handleLogin(e) {
+            e.preventDefault(); const u = document.getElementById('adminUser').value.trim(); const p = document.getElementById('adminPass').value.trim();
+            const { data, error } = await db.from('Credenciales').select('*').eq('usuario', u).eq('password', p).single();
+            if (error || !data || data.rol === 'comedor') { document.getElementById('loginError').innerText = 'Acceso Denegado.'; document.getElementById('loginError').classList.remove('hidden'); } 
+            else { adminUser = data.descripcion; sessionStorage.setItem('admin_user', adminUser); showDashboard(); }
+        }
+
+        function showDashboard() {
+            document.getElementById('login-screen').classList.add('hidden'); document.getElementById('dashboard-screen').classList.remove('hidden'); document.getElementById('dashboard-screen').classList.add('flex');
+            document.getElementById('header-user-name').innerText = adminUser;
+            switchView('personal'); fetchPendientes();
+        }
+
+        function switchView(v) {
+            ['personal', 'visitas', 'masiva', 'validaciones', 'reportes'].forEach(x => { document.getElementById('view-'+x).classList.add('hidden'); document.getElementById('nav-'+x).classList.remove('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+x).classList.add('text-slate-300'); });
+            document.getElementById('view-'+v).classList.remove('hidden'); document.getElementById('nav-'+v).classList.add('bg-ejesa-blue', 'text-white'); document.getElementById('nav-'+v).classList.remove('text-slate-300');
+            if(v==='personal') fetchData('Personal', 'employee-table-body');
+            if(v==='visitas') fetchData('VisitasAutorizadas', 'visitor-table-body');
+        }
+
+        function logout() { sessionStorage.clear(); location.reload(); }
+
+        async function fetchData(tabla, tbodyId) {
+            const { data } = await db.from(tabla).select('*').order('nombre');
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin datos.</td></tr>`; return; }
+            data.forEach(item => {
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4 font-bold">${item.dni || item.id || ''}</td><td class="p-4">${item.nombre}</td><td class="p-4">${item.empresa}</td><td class="p-4"><span class="bg-emerald-100 text-emerald-700 px-2 rounded">${item.estado}</span></td><td class="p-4"><button onclick="deleteRow('${tabla}', '${item.dni ? 'dni' : 'id'}', '${item.dni || item.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+        }
+
+        async function saveEmployee(e) {
+            e.preventDefault(); const p = document.getElementById('emp-pin').value, n = document.getElementById('emp-name').value, c = document.getElementById('emp-comp').value, s = document.getElementById('emp-stat').value;
+            await db.from('Personal').upsert({ dni: p, nombre: n, empresa: c, estado: s, telefono: '', sector: '' });
+            document.getElementById('modal-add').classList.add('hidden'); document.getElementById('emp-pin').value = ''; document.getElementById('emp-name').value = '';
+            fetchData('Personal', 'employee-table-body');
+        }
+
+        async function deleteRow(tabla, col, id) {
+            if(confirm("¿Eliminar registro?")) { await db.from(tabla).delete().eq(col, id); fetchData(tabla, tabla === 'Personal' ? 'employee-table-body' : 'visitor-table-body'); }
+        }
+
+        async function fetchPendientes() {
+            const { data } = await db.from('ValidacionesPendientes').select('*').eq('estado', 'Pendiente');
+            const tbody = document.getElementById('pendientes-table-body'); tbody.innerHTML = '';
+            document.getElementById('badge-val').innerText = data ? data.length : 0;
+            document.getElementById('badge-val').classList.toggle('hidden', !data || data.length === 0);
+            if(!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Todo al día.</td></tr>`; return; }
+            data.forEach(p => {
+                tbody.innerHTML += `<tr class="border-b"><td class="p-4">${p.fecha_consumo}</td><td class="p-4 font-bold">${p.nombre}</td><td class="p-4">${p.tipo_comida}</td><td class="p-4"><button onclick="aprobar('${p.id}')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded font-bold mr-2">Aprobar</button><button onclick="rechazar('${p.id}')" class="bg-red-100 text-red-700 px-3 py-1 rounded font-bold">Rechazar</button></td></tr>`;
+            });
+        }
+        async function aprobar(id) { 
+            const { data: p } = await db.from('ValidacionesPendientes').select('*').eq('id', id).single();
+            await db.from('RegistrosConsumo').insert([{ fecha: p.fecha_consumo, hora: '12:00', tipo_comida: p.tipo_comida, tipo_persona: p.tipo_persona, identificacion: p.identificacion, nombre: p.nombre, empresa: p.empresa, modo_registro: 'Carga Auditada', usuario_tablet: adminUser }]);
+            await db.from('ValidacionesPendientes').update({ estado: 'Aprobado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); 
+        }
+        async function rechazar(id) { await db.from('ValidacionesPendientes').update({ estado: 'Rechazado', aprobado_por: adminUser }).eq('id', id); fetchPendientes(); }
+
+        async function ejecutarCargaMasiva(e) {
+            e.preventDefault(); const inst = document.getElementById('masiva-inst').value, cant = document.getElementById('masiva-cant').value, tc = document.getElementById('masiva-comida').value;
+            const lote = []; const hoy = new Date().toLocaleDateString('en-CA');
+            for(let i=0; i<cant; i++) { lote.push({ fecha: hoy, hora: '12:00', tipo_comida: tc, tipo_persona: 'Visita Masiva', identificacion: 'LOTE-'+Date.now(), nombre: 'Ticket Standard', empresa: inst, modo_registro: 'Carga Masiva Delegación', usuario_tablet: adminUser }); }
+            await db.from('RegistrosConsumo').insert(lote); alert("¡Lote registrado con éxito!"); document.getElementById('masiva-inst').value = '';
+        }
+
+        async function generateReport() {
+            const s = document.getElementById('rep-start').value, e = document.getElementById('rep-end').value;
+            const { data } = await db.from('RegistrosConsumo').select('*').gte('fecha', s).lte('fecha', e);
+            document.getElementById('rep-kpi-total').innerText = data.length;
+            let pers=0, vis=0, exc=0, empresas = {};
+            data.forEach(r => {
+                if(r.tipo_persona === 'Personal') pers++; else vis++;
+                if(r.modo_registro.includes('Excepción')) exc++;
+                if(!empresas[r.empresa]) empresas[r.empresa] = 0; empresas[r.empresa]++;
+            });
+            document.getElementById('rep-kpi-pers').innerText = pers; document.getElementById('rep-kpi-vis').innerText = vis; document.getElementById('rep-kpi-exc').innerText = exc;
+            const tbody = document.getElementById('rep-body-empresa'); tbody.innerHTML = '';
+            Object.keys(empresas).sort().forEach(emp => { tbody.innerHTML += `<tr class="border-b"><td class="p-3 font-semibold">${emp}</td><td class="p-3 font-bold">${empresas[emp]}</td></tr>`; });
+        }
+    </script>
+</body>
+</html>
